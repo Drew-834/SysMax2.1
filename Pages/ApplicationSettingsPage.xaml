@@ -1,0 +1,379 @@
+﻿<Page x:Class="SysMax2._1.Pages.ApplicationSettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:SysMax2._1.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="650" d:DesignWidth="1000"
+      Title="Application Settings">
+
+    <Page.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+
+        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+        <Style x:Key="SettingsGroupStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#BBBBBB"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,15,0,10"/>
+        </Style>
+
+        <Style x:Key="SettingLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="SettingDescriptionStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+        <Style x:Key="SwitchControlStyle" TargetType="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Border x:Name="BackgroundBorder" Width="40" Height="20" 
+                                    Background="#555555" CornerRadius="10">
+                                <Ellipse x:Name="SwitchButton" Width="16" Height="16" 
+                                         Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="BackgroundBorder" Property="Background" Value="#3498db"/>
+                                <Setter TargetName="SwitchButton" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="SwitchButton" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SaveButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#3498db"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2980b9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1f6aa5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0">
+                <TextBlock Text="Application Settings" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
+                <Button x:Name="SaveSettingsButton" Content="Save Settings" Style="{StaticResource SaveButtonStyle}" 
+                        HorizontalAlignment="Right" Click="SaveSettingsButton_Click"/>
+            </Grid>
+
+            <!-- General Settings -->
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="General Settings" Style="{StaticResource CardHeaderStyle}"/>
+
+                    <StackPanel Grid.Row="1">
+                        <!-- Setting Item: Startup -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Start with Windows" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Automatically launch SysMax when you log into Windows" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="StartWithWindowsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Updates -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Check for updates automatically" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Periodically check for new versions of SysMax" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="AutoUpdateCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Visualization -->
+                        <TextBlock Text="VISUALIZATION" Style="{StaticResource SettingsGroupStyle}"/>
+
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="Refresh interval" Style="{StaticResource SettingLabelStyle}"/>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <RadioButton x:Name="RefreshSlowOption" Content="Slow (5s)" Margin="0,0,10,0" 
+                                             Foreground="#BBBBBB" GroupName="RefreshRate"/>
+                                <RadioButton x:Name="RefreshMediumOption" Content="Medium (2s)" Margin="0,0,10,0" 
+                                             Foreground="#BBBBBB" GroupName="RefreshRate" IsChecked="True"/>
+                                <RadioButton x:Name="RefreshFastOption" Content="Fast (1s)" 
+                                             Foreground="#BBBBBB" GroupName="RefreshRate"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Use animations" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Enable smooth transitions and animations in the user interface" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="UseAnimationsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Notifications Settings -->
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Notifications" Style="{StaticResource CardHeaderStyle}"/>
+
+                    <StackPanel Grid.Row="1">
+                        <!-- Setting Item: System Alerts -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="System alerts" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Receive notifications about critical system events" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="SystemAlertsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Performance Warnings -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Performance warnings" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Notify when CPU, memory, or disk usage exceeds threshold" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="PerformanceWarningsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Updates Notifications -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Updates available" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Notify when Windows updates or driver updates are available" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="UpdatesNotificationsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Alert Thresholds -->
+                        <TextBlock Text="ALERT THRESHOLDS" Style="{StaticResource SettingsGroupStyle}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- CPU -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="CPU Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
+                            <Slider Grid.Row="0" Grid.Column="1" Minimum="50" Maximum="100" Value="80" 
+                                    x:Name="CpuThresholdSlider" VerticalAlignment="Center"
+                                    Background="#444444" Foreground="#3498db"/>
+
+                            <!-- Memory -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Memory Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
+                            <Slider Grid.Row="1" Grid.Column="1" Minimum="50" Maximum="100" Value="85" 
+                                    x:Name="MemoryThresholdSlider" VerticalAlignment="Center"
+                                    Background="#444444" Foreground="#3498db"/>
+
+                            <!-- Disk -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Disk Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
+                            <Slider Grid.Row="2" Grid.Column="1" Minimum="50" Maximum="100" Value="90" 
+                                    x:Name="DiskThresholdSlider" VerticalAlignment="Center"
+                                    Background="#444444" Foreground="#3498db"/>
+
+                            <!-- Disk Space -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Low Disk Space:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
+                            <Slider Grid.Row="3" Grid.Column="1" Minimum="5" Maximum="25" Value="15" 
+                                    x:Name="DiskSpaceThresholdSlider" VerticalAlignment="Center"
+                                    Background="#444444" Foreground="#3498db"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Privacy Settings -->
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Privacy &amp; Data" Style="{StaticResource CardHeaderStyle}"/>
+
+                    <StackPanel Grid.Row="1">
+                        <!-- Setting Item: Data Collection -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Anonymous usage data" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Help improve SysMax by sending anonymous usage statistics" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="UsageDataCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Setting Item: Crash Reports -->
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Automatic crash reports" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Send diagnostic information when the application crashes" 
+                                       Style="{StaticResource SettingDescriptionStyle}"/>
+                            <CheckBox x:Name="CrashReportsCheck" Grid.Column="1" Grid.RowSpan="2" 
+                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
+                        </Grid>
+
+                        <!-- Privacy Notice -->
+                        <Border Background="#2a2a2a" Padding="15" CornerRadius="4" Margin="0,10,0,0">
+                            <TextBlock TextWrapping="Wrap" Foreground="#AAAAAA" FontSize="12">
+                                Your privacy is important to us. SysMax only collects data that helps improve the application
+                                and does not gather personal information. All data is anonymized before transmission.
+                                <LineBreak/><LineBreak/>
+                                For more details, see our full <Hyperlink Foreground="#3498db" 
+                                    NavigateUri="https://example.com/privacy" 
+                                    RequestNavigate="Hyperlink_RequestNavigate">Privacy Policy</Hyperlink>.
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>

@@ -52,9 +52,9 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0">
                     <TextBlock Text="User Mode:" Foreground="{StaticResource MutedTextColor}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton x:Name="BasicUserToggle" Content="Basic User" IsChecked="True" Click="UserToggle_Click" Tag="Basic"
+                        <ToggleButton x:Name="BasicUserToggle" Content="Basic" IsChecked="True" Click="UserToggle_Click" Tag="Basic"
                                      Background="#2d2d2d" Foreground="White" BorderThickness="0" Padding="10,5" Margin="0,0,5,0"/>
-                        <ToggleButton x:Name="ITProToggle" Content="IT Professional" Click="UserToggle_Click" Tag="Pro"
+                        <ToggleButton x:Name="ITProToggle" Content="Pro" Click="UserToggle_Click" Tag="Pro"
                                      Background="#2d2d2d" Foreground="{StaticResource MutedTextColor}" BorderThickness="0" Padding="10,5"/>
                     </StackPanel>
                 </StackPanel>
