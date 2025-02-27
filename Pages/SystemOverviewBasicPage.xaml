@@ -80,6 +80,33 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="CopyButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="#BBBBBB"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#555555"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -214,7 +241,11 @@
 
                     <Grid Grid.Row="0">
                         <TextBlock Text="Issues" Style="{StaticResource CardHeaderStyle}" Margin="0"/>
-                        <TextBlock x:Name="IssueCount" Text="2 issues found" Foreground="#f39c12" HorizontalAlignment="Right"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock x:Name="IssueCount" Text="2 issues found" Foreground="#f39c12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button x:Name="CopyAllIssuesButton" Content="Copy All Issues" Style="{StaticResource CopyButtonStyle}"
+                                    Click="CopyAllIssuesButton_Click" ToolTip="Copy all issues to clipboard"/>
+                        </StackPanel>
                     </Grid>
 
                     <StackPanel Grid.Row="1" x:Name="IssuesList">
@@ -225,14 +256,19 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="⚠️" FontSize="24" Margin="0,0,15,0" VerticalAlignment="Center"/>
 
-                                <TextBlock Grid.Column="1" Text="Your disk is getting full. This might slow down your computer." 
+                                <TextBlock x:Name="Issue1Text" Grid.Column="1" Text="Your disk is getting full. This might slow down your computer." 
                                            Foreground="White" TextWrapping="Wrap" VerticalAlignment="Center"/>
 
-                                <Button Grid.Column="2" Content="Fix Now" Style="{StaticResource FixButtonStyle}" 
+                                <Button Grid.Column="2" Content="📋" FontSize="16" Margin="10,0" Padding="5,0" 
+                                        Style="{StaticResource CopyButtonStyle}" Tag="Issue1"
+                                        ToolTip="Copy this issue to clipboard" Click="CopyIssueButton_Click"/>
+
+                                <Button Grid.Column="3" Content="Fix Now" Style="{StaticResource FixButtonStyle}" 
                                         Tag="DiskSpace" Click="FixIssue_Click"/>
                             </Grid>
                         </Border>
@@ -244,17 +280,25 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="🔒" FontSize="24" Margin="0,0,15,0" VerticalAlignment="Center"/>
 
-                                <TextBlock Grid.Column="1" Text="Important security updates are available to keep your computer safe." 
+                                <TextBlock x:Name="Issue2Text" Grid.Column="1" Text="Important security updates are available to keep your computer safe." 
                                            Foreground="White" TextWrapping="Wrap" VerticalAlignment="Center"/>
 
-                                <Button Grid.Column="2" Content="Update Now" Style="{StaticResource FixButtonStyle}" 
+                                <Button Grid.Column="2" Content="📋" FontSize="16" Margin="10,0" Padding="5,0" 
+                                        Style="{StaticResource CopyButtonStyle}" Tag="Issue2"
+                                        ToolTip="Copy this issue to clipboard" Click="CopyIssueButton_Click"/>
+
+                                <Button Grid.Column="3" Content="Update Now" Style="{StaticResource FixButtonStyle}" 
                                         Tag="WindowsUpdate" Click="FixIssue_Click"/>
                             </Grid>
                         </Border>
+
+                        <!-- Template for dynamically adding more issues -->
+                        <!-- Will be added programmatically for additional issues -->
 
                         <!-- No Issues Message (hidden by default) -->
                         <TextBlock x:Name="NoIssuesMessage" Text="No issues detected. Your system is running optimally." 
