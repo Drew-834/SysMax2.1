@@ -26,14 +26,23 @@ namespace SysMax2._1.Pages
         private HardwareMonitorService hardwareMonitor = HardwareMonitorService.Instance;
         private DispatcherTimer monitoringTimer;
         private bool isMonitoring = false;
+        private TabControl MainTabControl;
+
+
+        // Reference to the monitoring button - make sure this exists in your XAML
+        private Button monitoringButton;
 
         public SystemInfoPage()
         {
             InitializeComponent();
 
+
+
             // Get reference to main window for assistant interactions
             mainWindow = Window.GetWindow(this) as MainWindow;
 
+
+            MainTabControl = FindName("MainTabControl") as TabControl;
             // Initialize with system info
             LoadSystemInformation();
 
@@ -43,6 +52,12 @@ namespace SysMax2._1.Pages
                 Interval = TimeSpan.FromSeconds(2)
             };
             monitoringTimer.Tick += MonitoringTimer_Tick;
+
+            // Find the monitoring button if it exists in the XAML
+            monitoringButton = FindName("StartMonitoringButton") as Button;
+
+            // Register for Unloaded event to clean up resources
+            this.Unloaded += SystemInfoPage_Unloaded;
 
             // Log page initialization
             loggingService.Log(LogLevel.Info, "System Information page initialized");
@@ -130,7 +145,7 @@ namespace SysMax2._1.Pages
                 NetworkValue.Text = GetNetworkAdapterName();
                 BiosValue.Text = GetBiosVersion();
 
-                // Update live status metrics
+                // Update live metrics
                 UpdateLiveMetrics();
             }
             catch (Exception ex)
@@ -394,7 +409,34 @@ namespace SysMax2._1.Pages
                 loggingService.Log(LogLevel.Error, $"Error updating live metrics: {ex.Message}");
             }
         }
+        private void MonitoringToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            // This can just call your existing method
+            StartMonitoringButton_Click(sender, e);
+        }
 
+        private void TabButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button clickedButton = sender as Button;
+            if (clickedButton != null)
+            {
+                // Get the tag from the button, which likely indicates which tab to show
+                string tabTag = clickedButton.Tag?.ToString();
+
+                // Find the TabItem with that tag and select it
+                if (!string.IsNullOrEmpty(tabTag) && MainTabControl != null)
+                {
+                    foreach (TabItem item in MainTabControl.Items)
+                    {
+                        if (item.Tag?.ToString() == tabTag)
+                        {
+                            MainTabControl.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         private void LoadOperatingSystemInfo()
         {
             try
@@ -1571,7 +1613,6 @@ namespace SysMax2._1.Pages
                                     }
 
                                     AddNetworkGridRow(adapterGrid, row++, "DHCP Enabled:", configObj["DHCPEnabled"].ToString());
-
                                     break;
                                 }
                             }
@@ -1680,7 +1721,7 @@ namespace SysMax2._1.Pages
                 {
                     Content = "Run Connectivity Tests",
                     Margin = new Thickness(0, 0, 0, 15),
-                    Padding = new Thickness(15, 10),
+                    Padding = new Thickness(15, 10, 15, 10),
                     Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3498db")),
                     Foreground = new SolidColorBrush(Colors.White),
                     BorderThickness = new Thickness(0),
@@ -2017,15 +2058,17 @@ namespace SysMax2._1.Pages
                         {
                             double freePhysicalMemory = Convert.ToDouble(obj["FreePhysicalMemory"]) / (1024 * 1024);
                             sb.AppendLine($"Available Memory: {freePhysicalMemory:F2} GB");
+
                             double totalVirtualMemory = Convert.ToDouble(obj["TotalVirtualMemorySize"]) / 1024;
                             sb.AppendLine($"Total Virtual Memory: {totalVirtualMemory:F2} GB");
+
                             double freeVirtualMemory = Convert.ToDouble(obj["FreeVirtualMemory"]) / 1024;
                             sb.AppendLine($"Available Virtual Memory: {freeVirtualMemory:F2} GB");
                             break;
                         }
                     }
-                    sb.AppendLine();
-                    sb.AppendLine("Memory Modules:");
+
+                    sb.AppendLine("\nMemory Modules:");
                     using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PhysicalMemory"))
                     {
                         int moduleNumber = 1;
@@ -2052,17 +2095,17 @@ namespace SysMax2._1.Pages
                         foreach (var obj in searcher.Get())
                         {
                             double sizeGB = Convert.ToDouble(obj["Size"]) / (1024 * 1024 * 1024);
-                            sb.AppendLine($"Disk {diskNumber}: {obj["Model"]}");
-                            sb.AppendLine($"  Size: {sizeGB:F2} GB");
-                            sb.AppendLine($"  Interface Type: {obj["InterfaceType"]}");
-                            sb.AppendLine($"  Serial Number: {obj["SerialNumber"]}");
-                            sb.AppendLine($"  Firmware: {obj["FirmwareRevision"]}");
-                            sb.AppendLine($"  Partitions: {obj["Partitions"]}");
+                            sb.AppendLine($"  Disk {diskNumber}: {obj["Model"]}");
+                            sb.AppendLine($"    Size: {sizeGB:F2} GB");
+                            sb.AppendLine($"    Interface Type: {obj["InterfaceType"]}");
+                            sb.AppendLine($"    Serial Number: {obj["SerialNumber"]}");
+                            sb.AppendLine($"    Firmware: {obj["FirmwareRevision"]}");
+                            sb.AppendLine($"    Partitions: {obj["Partitions"]}");
                             diskNumber++;
                         }
                     }
-                    sb.AppendLine();
-                    sb.AppendLine("Logical Drives:");
+
+                    sb.AppendLine("\nLogical Drives:");
                     DriveInfo[] allDrives = DriveInfo.GetDrives();
                     foreach (DriveInfo drive in allDrives)
                     {
@@ -2072,17 +2115,18 @@ namespace SysMax2._1.Pages
                             double freeSpaceGB = drive.AvailableFreeSpace / (1024.0 * 1024 * 1024);
                             double usedSpaceGB = totalSizeGB - freeSpaceGB;
                             double usedPercent = (usedSpaceGB / totalSizeGB) * 100;
-                            sb.AppendLine($"Drive {drive.Name} ({drive.VolumeLabel}):");
-                            sb.AppendLine($"  File System: {drive.DriveFormat}");
-                            sb.AppendLine($"  Total Size: {totalSizeGB:F2} GB");
-                            sb.AppendLine($"  Used Space: {usedSpaceGB:F2} GB ({usedPercent:F1}%)");
-                            sb.AppendLine($"  Free Space: {freeSpaceGB:F2} GB ({100 - usedPercent:F1}%)");
+
+                            sb.AppendLine($"  Drive {drive.Name} ({drive.VolumeLabel})");
+                            sb.AppendLine($"    File System: {drive.DriveFormat}");
+                            sb.AppendLine($"    Total Size: {totalSizeGB:F2} GB");
+                            sb.AppendLine($"    Used Space: {usedSpaceGB:F2} GB ({usedPercent:F1}%)");
+                            sb.AppendLine($"    Free Space: {freeSpaceGB:F2} GB ({(100 - usedPercent):F1}%)");
                         }
                     }
                     sb.AppendLine();
 
-                    // GPU Information
-                    sb.AppendLine("GPU INFORMATION");
+                    // Graphics Information
+                    sb.AppendLine("GRAPHICS INFORMATION");
                     sb.AppendLine("----------------------------------------------------------");
                     using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
                     {
@@ -2113,23 +2157,1050 @@ namespace SysMax2._1.Pages
                     sb.AppendLine($"Network Status: {NetworkStatusValue.Text}");
                     sb.AppendLine();
 
+                    // Network Adapters
+                    sb.AppendLine("Network Adapters:");
+                    using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionStatus != NULL"))
+                    {
+                        foreach (var obj in searcher.Get())
+                        {
+                            sb.AppendLine($"  {obj["Name"]}");
+                            sb.AppendLine($"    Manufacturer: {obj["Manufacturer"]}");
+                            sb.AppendLine($"    Adapter Type: {obj["AdapterType"]?.ToString() ?? "Unknown"}");
+                            sb.AppendLine($"    MAC Address: {obj["MACAddress"]?.ToString() ?? "N/A"}");
+                            sb.AppendLine($"    Connection Status: {GetNetworkConnectionStatus(Convert.ToUInt16(obj["NetConnectionStatus"]))}");
+                            sb.AppendLine($"    Speed: {(obj["Speed"] != null ? $"{Convert.ToUInt64(obj["Speed"]) / 1000000} Mbps" : "Unknown")}");
+
+                            // Get IP information
+                            var adapterGuid = obj["GUID"]?.ToString();
+                            if (!string.IsNullOrEmpty(adapterGuid))
+                            {
+                                using (var configSearcher = new ManagementObjectSearcher($"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE SettingID = '{adapterGuid}'"))
+                                {
+                                    foreach (var configObj in configSearcher.Get())
+                                    {
+                                        var ipAddresses = (string[])configObj["IPAddress"];
+                                        if (ipAddresses != null && ipAddresses.Length > 0)
+                                        {
+                                            sb.AppendLine($"    IP Address: {string.Join(", ", ipAddresses)}");
+                                        }
+
+                                        var subnetMasks = (string[])configObj["IPSubnet"];
+                                        if (subnetMasks != null && subnetMasks.Length > 0)
+                                        {
+                                            sb.AppendLine($"    Subnet Mask: {string.Join(", ", subnetMasks)}");
+                                        }
+
+                                        var gateway = (string[])configObj["DefaultIPGateway"];
+                                        if (gateway != null && gateway.Length > 0)
+                                        {
+                                            sb.AppendLine($"    Default Gateway: {string.Join(", ", gateway)}");
+                                        }
+
+                                        var dnsServers = (string[])configObj["DNSServerSearchOrder"];
+                                        if (dnsServers != null && dnsServers.Length > 0)
+                                        {
+                                            sb.AppendLine($"    DNS Servers: {string.Join(", ", dnsServers)}");
+                                        }
+
+                                        sb.AppendLine($"    DHCP Enabled: {configObj["DHCPEnabled"]}");
+                                        break;
+                                    }
+                                }
+                            }
+                            sb.AppendLine();
+                        }
+                    }
+
                     // Write the built string to the selected file
                     File.WriteAllText(saveFileDialog.FileName, sb.ToString());
-                    MessageBox.Show("System information exported successfully.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Log the export action
+                    loggingService.Log(LogLevel.Info, $"System information exported to {saveFileDialog.FileName}");
+
+                    // Show confirmation
+                    MessageBox.Show("System information exported successfully!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Show assistant message
+                    if (mainWindow != null)
+                    {
+                        mainWindow.ShowAssistantMessage("I've exported all system information to a text file. You can open this file to view detailed information about your system hardware and software.");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 loggingService.Log(LogLevel.Error, $"Error exporting system information: {ex.Message}");
-                MessageBox.Show($"Error exporting system information: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error exporting system information: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void MonitoringTimer_Tick(object sender, EventArgs e)
         {
-            UpdateLiveMetrics();
+            // Update metrics when monitoring is active
+            if (isMonitoring)
+            {
+                UpdateLiveMetrics();
+            }
         }
 
-        // End of class and namespace
+        private void StartMonitoringButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (isMonitoring)
+            {
+                // Stop monitoring
+                monitoringTimer.Stop();
+                isMonitoring = false;
+
+                // Update button text if we have a reference to it
+                if (monitoringButton != null)
+                {
+                    monitoringButton.Content = "Start Monitoring";
+                }
+                else if (sender is Button button)
+                {
+                    button.Content = "Start Monitoring";
+                }
+
+                // Update status
+                if (mainWindow != null)
+                {
+                    var method = mainWindow.GetType().GetMethod("UpdateStatus", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        method.Invoke(mainWindow, new object[] { "System monitoring stopped" });
+                    }
+
+                    mainWindow.ShowAssistantMessage("I've stopped monitoring your system in real-time. The values you see now are from the last update.");
+                }
+
+                // Log action
+                loggingService.Log(LogLevel.Info, "User stopped system monitoring");
+            }
+            else
+            {
+                // Start monitoring
+                monitoringTimer.Start();
+                isMonitoring = true;
+
+                // Update button text if we have a reference to it
+                if (monitoringButton != null)
+                {
+                    monitoringButton.Content = "Stop Monitoring";
+                }
+                else if (sender is Button button)
+                {
+                    button.Content = "Stop Monitoring";
+                }
+
+                // Update status
+                if (mainWindow != null)
+                {
+                    var method = mainWindow.GetType().GetMethod("UpdateStatus", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        method.Invoke(mainWindow, new object[] { "System monitoring started" });
+                    }
+
+                    mainWindow.ShowAssistantMessage("I'm now monitoring your system in real-time. The metrics will update every 2 seconds, letting you see how your computer is performing.");
+                }
+
+                // Log action
+                loggingService.Log(LogLevel.Info, "User started system monitoring");
+            }
+        }
+
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // When tab changes, reset scroll position for better user experience
+            if (sender is TabControl tabControl && tabControl.SelectedItem is TabItem selectedTab)
+            {
+                if (selectedTab.Content is ScrollViewer scrollViewer)
+                {
+                    scrollViewer.ScrollToTop();
+                }
+            }
+        }
+
+        // Handle cleanup when the page is unloaded
+        private void SystemInfoPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // Clean up resources when the page is unloaded
+            monitoringTimer.Stop();
+
+            // Log page unload
+            loggingService.Log(LogLevel.Info, "System Information page unloaded");
+        }
+
+        #region Helper Methods
+
+        private string GetOSCaption()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        return obj["Caption"].ToString();
+                    }
+                }
+                return "Unknown Operating System";
+            }
+            catch
+            {
+                return "Unknown Operating System";
+            }
+        }
+
+        private string GetOSVersionAndServicePack()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Version, ServicePackMajorVersion FROM Win32_OperatingSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        string version = obj["Version"].ToString();
+                        uint spMajor = Convert.ToUInt32(obj["ServicePackMajorVersion"]);
+
+                        if (spMajor > 0)
+                        {
+                            return $"{version} Service Pack {spMajor}";
+                        }
+                        else
+                        {
+                            return version;
+                        }
+                    }
+                }
+                return "Unknown Version";
+            }
+            catch
+            {
+                return "Unknown Version";
+            }
+        }
+
+        private string GetOSBuild()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT BuildNumber FROM Win32_OperatingSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        return obj["BuildNumber"].ToString();
+                    }
+                }
+                return "Unknown Build";
+            }
+            catch
+            {
+                return "Unknown Build";
+            }
+        }
+
+        private string GetOSInstallDate()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT InstallDate FROM Win32_OperatingSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        string installDateString = obj["InstallDate"].ToString();
+                        if (DateTime.TryParseExact(installDateString.Substring(0, 14), "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out DateTime installDate))
+                        {
+                            return installDate.ToString("yyyy-MM-dd");
+                        }
+                        else
+                        {
+                            return "Unknown";
+                        }
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetLastWindowsUpdateDate()
+        {
+            try
+            {
+                // This uses registry to get the last update date
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\Results\Detect"))
+                {
+                    if (key != null)
+                    {
+                        var lastCheckedString = key.GetValue("LastSuccessTime")?.ToString();
+                        if (!string.IsNullOrEmpty(lastCheckedString))
+                        {
+                            if (DateTime.TryParse(lastCheckedString, out DateTime lastChecked))
+                            {
+                                return lastChecked.ToString("yyyy-MM-dd");
+                            }
+                        }
+                    }
+                }
+
+                // Try another registry key if the first one didn't work
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\Results\Install"))
+                {
+                    if (key != null)
+                    {
+                        var lastInstalledString = key.GetValue("LastSuccessTime")?.ToString();
+                        if (!string.IsNullOrEmpty(lastInstalledString))
+                        {
+                            if (DateTime.TryParse(lastInstalledString, out DateTime lastInstalled))
+                            {
+                                return lastInstalled.ToString("yyyy-MM-dd");
+                            }
+                        }
+                    }
+                }
+
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetComputerDomain()
+        {
+            try
+            {
+                return Environment.UserDomainName;
+            }
+            catch
+            {
+                return "Unknown Domain";
+            }
+        }
+
+        private string GetComputerRole()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT DomainRole FROM Win32_ComputerSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        uint roleValue = Convert.ToUInt32(obj["DomainRole"]);
+                        switch (roleValue)
+                        {
+                            case 0: return "Standalone Workstation";
+                            case 1: return "Member Workstation";
+                            case 2: return "Standalone Server";
+                            case 3: return "Member Server";
+                            case 4: return "Backup Domain Controller";
+                            case 5: return "Primary Domain Controller";
+                            default: return "Unknown Role";
+                        }
+                    }
+                }
+                return "Unknown Role";
+            }
+            catch
+            {
+                return "Unknown Role";
+            }
+        }
+
+        private string GetSystemUptime()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        string bootTimeString = obj["LastBootUpTime"].ToString();
+                        if (DateTime.TryParseExact(bootTimeString.Substring(0, 14), "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out DateTime bootTime))
+                        {
+                            TimeSpan uptime = DateTime.Now - bootTime;
+                            return $"{uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
+                        }
+                        else
+                        {
+                            return "Unknown";
+                        }
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetLocalIPAddress()
+        {
+            try
+            {
+                string ipAddresses = "";
+
+                // Get IPv4 addresses
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ||
+                         ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet))
+                    {
+                        foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                            {
+                                if (!string.IsNullOrEmpty(ipAddresses))
+                                {
+                                    ipAddresses += ", ";
+                                }
+                                ipAddresses += ip.Address.ToString();
+                            }
+                        }
+                    }
+                }
+
+                return string.IsNullOrEmpty(ipAddresses) ? "Not connected" : ipAddresses;
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetActiveNetworkAdapter()
+        {
+            try
+            {
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ||
+                         ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet))
+                    {
+                        return ni.Name;
+                    }
+                }
+                return "No active network adapter";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetProcessorName()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        return obj["Name"].ToString();
+                    }
+                }
+                return "Unknown Processor";
+            }
+            catch
+            {
+                return "Unknown Processor";
+            }
+        }
+
+        private double GetTotalPhysicalMemory()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        return Math.Round(Convert.ToDouble(obj["TotalPhysicalMemory"]) / (1024 * 1024 * 1024), 2);
+                    }
+                }
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private string GetGraphicsCardName()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        return obj["Name"].ToString();
+                    }
+                }
+                return "Unknown Graphics Card";
+            }
+            catch
+            {
+                return "Unknown Graphics Card";
+            }
+        }
+
+        private string GetStorageSummary()
+        {
+            try
+            {
+                long totalSize = 0;
+                long totalFreeSpace = 0;
+
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                foreach (DriveInfo drive in allDrives)
+                {
+                    if (drive.IsReady && drive.DriveType == DriveType.Fixed)
+                    {
+                        totalSize += drive.TotalSize;
+                        totalFreeSpace += drive.AvailableFreeSpace;
+                    }
+                }
+
+                if (totalSize > 0)
+                {
+                    double totalSizeGB = totalSize / (1024.0 * 1024 * 1024);
+                    double freeSpaceGB = totalFreeSpace / (1024.0 * 1024 * 1024);
+                    double usedPercent = 100 - (freeSpaceGB / totalSizeGB * 100);
+
+                    return $"{totalSizeGB:F0} GB ({usedPercent:F0}% used)";
+                }
+
+                return "Unknown Storage";
+            }
+            catch
+            {
+                return "Unknown Storage";
+            }
+        }
+
+        private string GetMotherboardInfo()
+        {
+            try
+            {
+                string manufacturer = "";
+                string product = "";
+
+                using (var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product FROM Win32_BaseBoard"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        manufacturer = obj["Manufacturer"].ToString();
+                        product = obj["Product"].ToString();
+                        break;
+                    }
+                }
+
+                return $"{manufacturer} {product}";
+            }
+            catch
+            {
+                return "Unknown Motherboard";
+            }
+        }
+
+        private string GetNetworkAdapterName()
+        {
+            try
+            {
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ||
+                         ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet))
+                    {
+                        return ni.Description;
+                    }
+                }
+                return "No active network adapter";
+            }
+            catch
+            {
+                return "Unknown Network Adapter";
+            }
+        }
+
+        private string GetBiosVersion()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Manufacturer, SMBIOSBIOSVersion FROM Win32_BIOS"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        string manufacturer = obj["Manufacturer"].ToString();
+                        string version = obj["SMBIOSBIOSVersion"].ToString();
+                        return $"{manufacturer} {version}";
+                    }
+                }
+                return "Unknown BIOS Version";
+            }
+            catch
+            {
+                return "Unknown BIOS Version";
+            }
+        }
+
+        private string GetRegisteredOwner()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion"))
+                {
+                    if (key != null)
+                    {
+                        string owner = key.GetValue("RegisteredOwner")?.ToString() ?? "Unknown";
+                        return owner;
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetRegisteredOrganization()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion"))
+                {
+                    if (key != null)
+                    {
+                        string org = key.GetValue("RegisteredOrganization")?.ToString() ?? "Unknown";
+                        return org;
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetWindowsProductId()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion"))
+                {
+                    if (key != null)
+                    {
+                        string productId = key.GetValue("ProductId")?.ToString() ?? "Unknown";
+                        return productId;
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetWindowsProductKey()
+        {
+            // For security/privacy reasons, we'll return a masked key
+            return "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX";
+        }
+
+        private string GetWindowsDefenderStatus()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender\Real-Time Protection"))
+                {
+                    if (key != null)
+                    {
+                        var disableRealtimeMonitoring = key.GetValue("DisableRealtimeMonitoring");
+                        if (disableRealtimeMonitoring != null && Convert.ToInt32(disableRealtimeMonitoring) == 0)
+                        {
+                            return "Enabled";
+                        }
+                        else
+                        {
+                            return "Disabled";
+                        }
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetWindowsFirewallStatus()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher(@"SELECT * FROM FirewallProduct"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        bool enabled = Convert.ToBoolean(obj["Enabled"]);
+                        return enabled ? "Enabled" : "Disabled";
+                    }
+                }
+
+                // Fallback using registry
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile"))
+                {
+                    if (key != null)
+                    {
+                        var enableFirewall = key.GetValue("EnableFirewall");
+                        if (enableFirewall != null && Convert.ToInt32(enableFirewall) == 1)
+                        {
+                            return "Enabled";
+                        }
+                        else
+                        {
+                            return "Disabled";
+                        }
+                    }
+                }
+
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetWindowsUpdateSettings()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update"))
+                {
+                    if (key != null)
+                    {
+                        var auOptions = key.GetValue("AUOptions");
+                        if (auOptions != null)
+                        {
+                            switch (Convert.ToInt32(auOptions))
+                            {
+                                case 1: return "Never check for updates";
+                                case 2: return "Check for updates but let me choose whether to download and install them";
+                                case 3: return "Download updates but let me choose whether to install them";
+                                case 4: return "Install updates automatically";
+                                default: return "Unknown";
+                            }
+                        }
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetUACLevel()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"))
+                {
+                    if (key != null)
+                    {
+                        var consentPromptBehaviorAdmin = key.GetValue("ConsentPromptBehaviorAdmin");
+                        var promptOnSecureDesktop = key.GetValue("PromptOnSecureDesktop");
+
+                        if (consentPromptBehaviorAdmin != null && promptOnSecureDesktop != null)
+                        {
+                            int adminValue = Convert.ToInt32(consentPromptBehaviorAdmin);
+                            int desktopValue = Convert.ToInt32(promptOnSecureDesktop);
+
+                            if (adminValue == 0)
+                                return "Never notify";
+                            else if (adminValue == 5 && desktopValue == 0)
+                                return "Notify me only when apps try to make changes (no secure desktop)";
+                            else if (adminValue == 5 && desktopValue == 1)
+                                return "Notify me only when apps try to make changes (with secure desktop)";
+                            else if (adminValue == 2 && desktopValue == 1)
+                                return "Always notify";
+                            else
+                                return "Custom";
+                        }
+                    }
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private bool IsSystemRestoreEnabled()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_ComputerSystem"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        var systemDrive = Environment.GetEnvironmentVariable("SystemDrive");
+                        using (var restoreKey = Registry.LocalMachine.OpenSubKey($@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\RPSessionInterval"))
+                        {
+                            return restoreKey != null;
+                        }
+                    }
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsFastStartupEnabled()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Power"))
+                {
+                    if (key != null)
+                    {
+                        var hibernateBootEnabled = key.GetValue("HiberbootEnabled");
+                        if (hibernateBootEnabled != null)
+                        {
+                            return Convert.ToInt32(hibernateBootEnabled) == 1;
+                        }
+                    }
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private string GetCpuArchitecture(ushort architecture)
+        {
+            switch (architecture)
+            {
+                case 0: return "x86";
+                case 1: return "MIPS";
+                case 2: return "Alpha";
+                case 3: return "PowerPC";
+                case 6: return "ia64";
+                case 9: return "x64";
+                default: return "Unknown";
+            }
+        }
+
+        private string[] GetCpuFeatures()
+        {
+            List<string> features = new List<string>();
+
+            try
+            {
+                // Common CPU features to look for
+                string[] featuresToCheck = {
+                    "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE4.1", "SSE4.2", "AVX", "AVX2", "AVX512",
+                    "AES", "FMA", "FMA3", "FMA4", "BMI1", "BMI2", "VT-x", "AMD-V", "Intel VT-d", "AMD-Vi",
+                    "XOP", "F16C", "FP16", "SGX", "CET", "VAES", "CLMUL", "PCLMULQDQ", "RDRAND", "RDSEED",
+                    "ADX", "SHA", "VNNI", "3DNow"
+                };
+
+                // Get processor ID from WMI
+                string processorId = "";
+                using (var searcher = new ManagementObjectSearcher("SELECT ProcessorId FROM Win32_Processor"))
+                {
+                    foreach (var obj in searcher.Get())
+                    {
+                        processorId = obj["ProcessorId"].ToString();
+                        break;
+                    }
+                }
+
+                // Check registry for CPUID flags
+                using (var key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0"))
+                {
+                    if (key != null)
+                    {
+                        // Add basic features
+                        foreach (var feature in featuresToCheck)
+                        {
+                            if (key.GetValue($"Feature{feature}") != null ||
+                                (processorId.Contains(feature) && !features.Contains(feature)))
+                            {
+                                features.Add(feature);
+                            }
+                        }
+                    }
+                }
+
+                // If no features were found, add some basic ones based on processor name
+                if (features.Count == 0)
+                {
+                    string processorName = GetProcessorName().ToUpper();
+
+                    if (processorName.Contains("INTEL"))
+                    {
+                        // Basic Intel features
+                        features.AddRange(new[] { "MMX", "SSE", "SSE2", "SSE3" });
+
+                        if (processorName.Contains("CORE"))
+                        {
+                            features.AddRange(new[] { "SSSE3", "SSE4.1", "SSE4.2" });
+                        }
+
+                        if (processorName.Contains("I7") || processorName.Contains("I9"))
+                        {
+                            features.AddRange(new[] { "AVX", "AVX2", "AES" });
+                        }
+                    }
+                    else if (processorName.Contains("AMD"))
+                    {
+                        // Basic AMD features
+                        features.AddRange(new[] { "MMX", "SSE", "SSE2", "SSE3" });
+
+                        if (processorName.Contains("RYZEN"))
+                        {
+                            features.AddRange(new[] { "AVX", "AVX2", "SSE4.1", "SSE4.2", "AES" });
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // If all else fails, add some very basic features
+                features.AddRange(new[] { "MMX", "SSE", "SSE2" });
+            }
+
+            return features.ToArray();
+        }
+
+        private string GetMemoryFormFactor(ushort formFactor)
+        {
+            switch (formFactor)
+            {
+                case 0: return "Unknown";
+                case 1: return "Other";
+                case 2: return "SIP";
+                case 3: return "DIP";
+                case 4: return "ZIP";
+                case 5: return "SOJ";
+                case 6: return "Proprietary";
+                case 7: return "SIMM";
+                case 8: return "DIMM";
+                case 9: return "TSOP";
+                case 10: return "PGA";
+                case 11: return "RIMM";
+                case 12: return "SODIMM";
+                case 13: return "SRIMM";
+                case 14: return "SMD";
+                case 15: return "SSMP";
+                case 16: return "QFP";
+                case 17: return "TQFP";
+                case 18: return "SOIC";
+                case 19: return "LCC";
+                case 20: return "PLCC";
+                case 21: return "BGA";
+                case 22: return "FPBGA";
+                case 23: return "LGA";
+                default: return "Unknown";
+            }
+        }
+
+        private SolidColorBrush GetProgressBarColor(double value)
+        {
+            if (value > 90)
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+            }
+            else if (value > 75)
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+            }
+            else
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
+            }
+        }
+
+        private string GetDriverDate(string driverDate)
+        {
+            // WMI returns dates in a specific format that needs to be parsed
+            try
+            {
+                if (driverDate.Length >= 14)
+                {
+                    // Extract YYYYMMDD portion
+                    string dateStr = driverDate.Substring(0, 8);
+
+                    // Parse year, month, day
+                    int year = int.Parse(dateStr.Substring(0, 4));
+                    int month = int.Parse(dateStr.Substring(4, 2));
+                    int day = int.Parse(dateStr.Substring(6, 2));
+
+                    return $"{year}-{month:D2}-{day:D2}";
+                }
+                return "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        private string GetNetworkConnectionStatus(ushort status)
+        {
+            switch (status)
+            {
+                case 0: return "Disconnected";
+                case 1: return "Connecting";
+                case 2: return "Connected";
+                case 3: return "Disconnecting";
+                case 4: return "Hardware not present";
+                case 5: return "Hardware disabled";
+                case 6: return "Hardware malfunction";
+                case 7: return "Media disconnected";
+                case 8: return "Authenticating";
+                case 9: return "Authentication succeeded";
+                case 10: return "Authentication failed";
+                case 11: return "Invalid address";
+                case 12: return "Credentials required";
+                default: return "Unknown";
+            }
+        }
+
+        private string GetNodeType(uint nodeType)
+        {
+            switch (nodeType)
+            {
+                case 1: return "B-node (Broadcast)";
+                case 2: return "P-node (Peer-to-peer)";
+                case 4: return "M-node (Mixed)";
+                case 8: return "H-node (Hybrid)";
+                default: return "Unknown";
+            }
+        }
+
+        #endregion
     }
 }
