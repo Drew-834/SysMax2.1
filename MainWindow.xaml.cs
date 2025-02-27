@@ -151,8 +151,6 @@ namespace SysMax2._1
             }
         }
 
-        // Initialize assistant service handles this now
-
         private void Navigation_Click(object sender, RoutedEventArgs e)
         {
             // Get the name of the clicked navigation item
@@ -198,21 +196,28 @@ namespace SysMax2._1
                 // Basic mode - show assistant
                 AssistantContainer.Visibility = Visibility.Visible;
 
-                // In a real implementation, you would also:
-                // - Show simplified views
-                // - Hide advanced tools
-                // - Use simpler language in UI
+                // If we're on the Overview page, switch to the Basic version
+                if (currentPage == "Overview")
+                {
+                    NavigateToPage("Overview");
+                }
+
+                // Update assistant message
+                if (isAssistantPanelOpen)
+                {
+                    UpdateAssistantMessage("I'm here to help! The Basic mode shows you simplified information about your computer's health.");
+                }
             }
             else if (userMode == "Pro")
             {
                 // Pro mode - hide assistant by default
                 CloseAssistantPanel();
 
-                // In a real implementation, you would also:
-                // - Show detailed metrics
-                // - Display advanced tools
-                // - Use more technical language
-                // - Show additional diagnostic options
+                // If we're on the Overview page, switch to the Pro version
+                if (currentPage == "Overview")
+                {
+                    NavigateToPage("Overview");
+                }
             }
         }
 
@@ -458,30 +463,47 @@ namespace SysMax2._1
             switch (pageName)
             {
                 case "Overview":
-                    // Create a real SystemOverviewPage
-                    newPage = new Pages.SystemOverviewPage();
+                    // Create the appropriate version of the Overview page based on user mode
+                    if (currentUserMode == "Basic")
+                    {
+                        newPage = new Pages.SystemOverviewBasicPage();
+                    }
+                    else
+                    {
+                        newPage = new Pages.SystemOverviewPage();
+                    }
+                    break;
+
+                case "Settings":
+                    // Create ApplicationSettingsPage
+                    newPage = new Pages.ApplicationSettingsPage();
+                    break;
+
+                case "Help":
+                    // Create HelpSupportPage
+                    newPage = new Pages.HelpSupportPage();
                     break;
 
                 case "Network":
-                    // For now, use a placeholder for Network page
-                    newPage = CreatePlaceholderPage(pageName);
-                    break;
-
-                // For other pages, we'll create placeholders for now
                 case "CPU":
                 case "Memory":
                 case "Storage":
                 case "Diagnostics":
                 case "Optimization":
-                case "Settings":
-                case "Help":
-                    // Create a simple placeholder page with a title
+                    // For now, use placeholders for these pages
                     newPage = CreatePlaceholderPage(pageName);
                     break;
 
                 default:
                     // Default to Overview if unknown page
-                    newPage = new Pages.SystemOverviewPage();
+                    if (currentUserMode == "Basic")
+                    {
+                        newPage = new Pages.SystemOverviewBasicPage();
+                    }
+                    else
+                    {
+                        newPage = new Pages.SystemOverviewPage();
+                    }
                     break;
             }
 
