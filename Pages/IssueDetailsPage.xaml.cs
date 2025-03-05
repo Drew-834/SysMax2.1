@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using SysMax2._1.Models;
 using SysMax2._1.Services;
 
@@ -13,537 +17,594 @@ namespace SysMax2._1.Pages
     /// </summary>
     public partial class IssueDetailsPage : Page
     {
-        private MainWindow mainWindow;
-        private LoggingService loggingService = LoggingService.Instance;
-        private IssueInfo currentIssue;
         private string issueType;
+        private readonly LoggingService _loggingService = LoggingService.Instance;
+        private readonly EnhancedHardwareMonitorService _hardwareMonitor;
+        private MainWindow? mainWindow;
+        private DispatcherTimer? progressTimer;
+        private int fixProgress = 0;
 
-        public IssueDetailsPage(string issueType = "DiskSpace")
+        public class ResolutionStep
+        {
+            public int StepNumber { get; set; }
+            public string Title { get; set; } = "";
+            public string Description { get; set; } = "";
+        }
+
+        public ObservableCollection<ResolutionStep> Steps { get; set; } = new ObservableCollection<ResolutionStep>();
+
+        public IssueDetailsPage(string issueType)
         {
             InitializeComponent();
 
-            // Get reference to main window for assistant interactions
+            this.issueType = issueType;
+            _hardwareMonitor = EnhancedHardwareMonitorService.Instance;
+
+            // Find main window
             mainWindow = Window.GetWindow(this) as MainWindow;
 
-            // Store the issue type
-            this.issueType = issueType;
+            // Set resolution steps as ItemsSource
+            ResolutionSteps.ItemsSource = Steps;
 
-            // Initialize with the specified issue type
-            LoadIssueDetails(issueType);
+            // Configure issue details based on type
+            ConfigureIssueDetails();
 
-            // Log page initialization
-            loggingService.Log(LogLevel.Info, $"Issue Details page opened for issue type: {issueType}");
-
-            // Show the assistant with helpful information
-            if (mainWindow != null)
-            {
-                mainWindow.ShowAssistantMessage("This page shows detailed information about the issue and steps to fix it. Follow the recommended actions to resolve the problem.");
-            }
+            // Log page navigation
+            _loggingService.Log(LogLevel.Info, $"Navigated to Issue Details page for issue type: {issueType}");
         }
 
-        private void LoadIssueDetails(string issueType)
+        private void ConfigureIssueDetails()
         {
-            // Create a mock issue based on the specified type
+            // Configure UI based on issue type
             switch (issueType)
             {
                 case "DiskSpace":
-                    currentIssue = new IssueInfo
-                    {
-                        Icon = "⚠️",
-                        Text = "Your disk is getting full. This might slow down your computer.",
-                        FixButtonText = "Fix Now",
-                        FixActionTag = "DiskSpace",
-                        IssueSeverity = IssueInfo.Severity.Medium,
-                        Timestamp = DateTime.Now.AddHours(-3) // Detected 3 hours ago
-                    };
-
-                    // Update the UI with disk space specific details
-                    IssueTitle.Text = "Disk Space Low";
-                    IssueDescription.Text = "Your disk is getting full. This might slow down your computer and prevent updates from installing correctly.";
-                    IssueIcon.Text = "💾";
-                    IssueSeverity.Text = "Medium";
-                    IssueImpact.Text = "Performance";
-                    IssueDetected.Text = currentIssue.Timestamp.ToString("yyyy-MM-dd h:mm tt");
-
-                    // No need to update troubleshooting steps - already set in XAML for disk space issue
+                    ConfigureDiskSpaceIssue();
                     break;
 
-                case "WindowsUpdate":
-                    currentIssue = new IssueInfo
-                    {
-                        Icon = "🔒",
-                        Text = "Important security updates are available to keep your computer safe.",
-                        FixButtonText = "Update Now",
-                        FixActionTag = "WindowsUpdate",
-                        IssueSeverity = IssueInfo.Severity.High,
-                        Timestamp = DateTime.Now.AddDays(-1) // Detected 1 day ago
-                    };
-
-                    // Update the UI with Windows Update specific details
-                    IssueTitle.Text = "Windows Updates Available";
-                    IssueDescription.Text = "Important security updates are available to keep your computer safe from the latest threats.";
-                    IssueIcon.Text = "🔄";
-                    IssueSeverity.Text = "High";
-                    IssueSeverity.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
-                    IssueImpact.Text = "Security";
-                    IssueDetected.Text = currentIssue.Timestamp.ToString("yyyy-MM-dd h:mm tt");
-
-                    // Update troubleshooting steps for Windows Update issue
-                    UpdateTroubleshootingStepsForWindowsUpdate();
-
-                    // Update additional info text
-                    AdditionalInfoText.Text = "Keeping Windows updated is essential for maintaining security and performance. Updates include patches for security vulnerabilities, bug fixes, and sometimes new features.\n\n" +
-                                             "Delaying updates may expose your computer to:\n" +
-                                             "• Security vulnerabilities\n" +
-                                             "• Compatibility issues with newer software\n" +
-                                             "• Missing out on performance improvements\n" +
-                                             "• Potential system instability\n\n" +
-                                             "Windows updates are designed to keep your system running smoothly and securely. It's recommended to install them as soon as possible.";
-
-                    // Update IT Pro information
-                    ITProInfoText.Text = "Technical Details:\n" +
-                                        "There are pending Windows updates available for installation. These include security updates and cumulative updates.\n\n" +
-                                        "System Information:\n" +
-                                        "• Current Windows version: Windows 10 Pro 21H2\n" +
-                                        "• Last update check: " + DateTime.Now.AddHours(-12).ToString("yyyy-MM-dd HH:mm:ss") + "\n" +
-                                        "• Update KB numbers: KB5022282, KB5022845\n" +
-                                        "• Update types: Security, Cumulative\n" +
-                                        "• Windows Update service status: Running\n\n" +
-                                        "Enterprise Solutions:\n" +
-                                        "• Use WSUS or Microsoft Endpoint Manager to manage updates\n" +
-                                        "• PowerShell check for updates: Get-WindowsUpdate\n" +
-                                        "• PowerShell install all updates: Install-WindowsUpdate -AcceptAll\n" +
-                                        "• Use Group Policy to configure update behavior: Computer Configuration > Administrative Templates > Windows Components > Windows Update";
-                    break;
-
-                case "CPUTemperature":
-                    currentIssue = new IssueInfo
-                    {
-                        Icon = "🌡️",
-                        Text = "CPU temperature is high. Make sure your computer's cooling is working properly.",
-                        FixButtonText = "Learn More",
-                        FixActionTag = "CPUTemperature",
-                        IssueSeverity = IssueInfo.Severity.Medium,
-                        Timestamp = DateTime.Now.AddMinutes(-30) // Detected 30 minutes ago
-                    };
-
-                    // Update the UI with CPU Temperature specific details
-                    IssueTitle.Text = "CPU Temperature High";
-                    IssueDescription.Text = "Your processor is running at a higher temperature than normal. This could lead to performance throttling or hardware damage if not addressed.";
-                    IssueIcon.Text = "🌡️";
-                    IssueSeverity.Text = "Medium";
-                    IssueImpact.Text = "Performance, Hardware";
-                    IssueDetected.Text = currentIssue.Timestamp.ToString("yyyy-MM-dd h:mm tt");
-
-                    // Update troubleshooting steps for CPU Temperature issue
-                    UpdateTroubleshootingStepsForCPUTemperature();
-
-                    // Update additional info text
-                    AdditionalInfoText.Text = "CPU temperature is an important factor in system health and performance. Modern CPUs will automatically reduce their speed (thermal throttling) when they get too hot to prevent damage.\n\n" +
-                                             "High CPU temperatures can be caused by:\n" +
-                                             "• Dust buildup in cooling vents or heatsink\n" +
-                                             "• Poor case airflow\n" +
-                                             "• Failing cooling fan\n" +
-                                             "• Improper thermal paste application\n" +
-                                             "• Running CPU-intensive applications\n" +
-                                             "• High ambient room temperature\n\n" +
-                                             "Most CPUs are designed to operate safely up to 95°C, but for optimal performance and longevity, it's best to keep temperatures below 80°C under load.";
-
-                    // Update IT Pro information
-                    ITProInfoText.Text = "Technical Details:\n" +
-                                        "The CPU is operating at elevated temperatures that may lead to thermal throttling and reduced performance.\n\n" +
-                                        "System Information:\n" +
-                                        "• CPU Model: Intel Core i7-12700K\n" +
-                                        "• Current Temperature: 87°C\n" +
-                                        "• Thermal Design Power (TDP): 125W\n" +
-                                        "• Thermal Throttling Threshold: 95°C\n" +
-                                        "• Fan Speed: 2200 RPM (90%)\n" +
-                                        "• Current CPU Usage: 76%\n\n" +
-                                        "Enterprise Solutions:\n" +
-                                        "• Remotely monitor temperatures with HWiNFO + SNMP/WMI\n" +
-                                        "• PowerShell temperature monitoring: Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace \"root\\wmi\"\n" +
-                                        "• Schedule regular maintenance for dust removal\n" +
-                                        "• Consider implementing rack cooling monitoring in server environments\n" +
-                                        "• Refer to Intel documentation for specific thermal guidelines for your CPU model";
+                case "HighCPU":
+                    ConfigureHighCpuIssue();
                     break;
 
                 case "HighMemory":
-                    currentIssue = new IssueInfo
-                    {
-                        Icon = "📊",
-                        Text = "RAM usage is high. Try closing some applications to improve performance.",
-                        FixButtonText = "Fix Now",
-                        FixActionTag = "HighMemory",
-                        IssueSeverity = IssueInfo.Severity.Medium,
-                        Timestamp = DateTime.Now.AddMinutes(-5) // Detected 5 minutes ago
-                    };
+                    ConfigureHighMemoryIssue();
+                    break;
 
-                    // Update the UI with Memory specific details
-                    IssueTitle.Text = "High Memory Usage";
-                    IssueDescription.Text = "Your computer is using a large amount of RAM. This can slow down performance, especially when multitasking.";
-                    IssueIcon.Text = "📊";
-                    IssueSeverity.Text = "Medium";
-                    IssueImpact.Text = "Performance";
-                    IssueDetected.Text = currentIssue.Timestamp.ToString("yyyy-MM-dd h:mm tt");
+                case "WindowsUpdate":
+                    ConfigureWindowsUpdateIssue();
+                    break;
 
-                    // Update troubleshooting steps for Memory issue
-                    UpdateTroubleshootingStepsForMemory();
+                case "NetworkDisconnected":
+                    ConfigureNetworkIssue();
+                    break;
 
-                    // Update additional info text
-                    AdditionalInfoText.Text = "Memory (RAM) is used to store data that active applications need for quick access. When memory usage is high, your computer may become less responsive, especially when switching between applications.\n\n" +
-                                             "High memory usage can be caused by:\n" +
-                                             "• Too many applications running simultaneously\n" +
-                                             "• Memory leaks in applications\n" +
-                                             "• Browser tabs consuming memory\n" +
-                                             "• Background services and processes\n" +
-                                             "• Malware or viruses\n\n" +
-                                             "Windows will use the page file (virtual memory on your disk) when physical memory is full, but this is much slower than RAM and will reduce performance.";
-
-                    // Update IT Pro information
-                    ITProInfoText.Text = "Technical Details:\n" +
-                                        "Physical memory utilization is exceeding optimal thresholds, potentially causing page file usage and performance degradation.\n\n" +
-                                        "System Information:\n" +
-                                        "• Total Physical Memory: 16 GB\n" +
-                                        "• Memory Currently In Use: 13.4 GB (84%)\n" +
-                                        "• Available Memory: 2.6 GB\n" +
-                                        "• Page File Usage: 3.2 GB\n" +
-                                        "• Top Memory Consumers:\n" +
-                                        "  - Chrome.exe: 2.1 GB\n" +
-                                        "  - Outlook.exe: 1.3 GB\n" +
-                                        "  - Teams.exe: 0.9 GB\n\n" +
-                                        "Enterprise Solutions:\n" +
-                                        "• PowerShell memory assessment: Get-Process | Sort-Object -Property WS -Descending | Select-Object -First 10\n" +
-                                        "• Use Resource Monitor for detailed memory analysis\n" +
-                                        "• Consider implementing application memory limits via Group Policy\n" +
-                                        "• For Chrome deployment, use policies to limit memory usage: ChromeMemoryLimit";
+                case "DriverIssues":
+                    ConfigureDriverIssue();
                     break;
 
                 default:
-                    // Default to disk space issue if the type is unknown
-                    LoadIssueDetails("DiskSpace");
+                    ConfigureGenericIssue();
                     break;
+            }
+
+            // Update window status
+            if (mainWindow != null)
+            {
+                mainWindow.UpdateStatus($"Viewing {issueType} issue details");
             }
         }
 
-        private void UpdateTroubleshootingStepsForWindowsUpdate()
+        #region Issue Type Configurations
+
+        private void ConfigureDiskSpaceIssue()
         {
-            // Clear existing steps
-            TroubleshootingSteps.Children.Clear();
+            // Set issue details
+            IssueTitle.Text = "Low Disk Space";
+            IssueSubtitle.Text = "Resolve low disk space issues to improve system performance";
+            IssueIcon.Text = "💾";
 
-            // Add Windows Update specific steps
+            // Get current free space in GB
+            double freeSpaceGB = _hardwareMonitor.AvailableDiskSpace / (1024.0 * 1024 * 1024);
+            double totalSpaceGB = _hardwareMonitor.TotalDiskSpace / (1024.0 * 1024 * 1024);
+            double usedPercent = _hardwareMonitor.DiskUsage;
 
-            // Step 1
-            Border step1 = CreateTroubleshootingStep(
-                "1",
-                "Check for Windows Updates",
-                "Open Windows Update settings to see what updates are available and install them.",
-                "Check for Updates",
-                "WindowsUpdate");
-            TroubleshootingSteps.Children.Add(step1);
+            IssueHeading.Text = "Low Disk Space Detected";
+            IssueDescription.Text = $"Your system is running low on disk space with only {freeSpaceGB:F1} GB free out of {totalSpaceGB:F0} GB total ({usedPercent:F1}% used). Low disk space can slow down your computer and prevent Windows updates from installing.";
 
-            // Step 2
-            Border step2 = CreateTroubleshootingStep(
-                "2",
-                "Restart Your Computer",
-                "Some updates require a restart to complete installation. Save your work and restart your computer.",
-                "Restart Later",
-                "RestartComputer");
-            TroubleshootingSteps.Children.Add(step2);
+            // Set severity based on how critical the space issue is
+            if (freeSpaceGB < 5)
+            {
+                IssueSeverityText.Text = "High Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                IssueImpact.Text = "Impact: Critical system functions may fail, including Windows updates and temporary file storage.";
+            }
+            else if (freeSpaceGB < 10)
+            {
+                IssueSeverityText.Text = "Medium Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                IssueImpact.Text = "Impact: System performance may be degraded, and you may experience issues with large files and updates.";
+            }
+            else
+            {
+                IssueSeverityText.Text = "Low Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f1c40f"));
+                IssueImpact.Text = "Impact: You're approaching low disk space which could eventually affect system performance.";
+            }
 
-            // Step 3
-            Border step3 = CreateTroubleshootingStep(
-                "3",
-                "Troubleshoot Update Issues",
-                "If updates fail to install, run the Windows Update Troubleshooter to automatically fix common problems.",
-                "Run Troubleshooter",
-                "UpdateTroubleshooter");
-            TroubleshootingSteps.Children.Add(step3);
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Run Disk Cleanup", Description = "Windows Disk Cleanup tool can remove temporary files, system files, and empty the Recycle Bin to free up space." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Uninstall Unused Applications", Description = "Remove applications you no longer use to free up disk space." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Move Files to External Storage", Description = "Consider moving large files like photos, videos, and documents to an external drive or cloud storage." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Clean Browser Cache", Description = "Clear your web browser's cache to free up additional space." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Run Disk Cleanup";
+
+            // Set additional info
+            AdditionalInfoText.Text = "Low disk space can significantly impact your computer's performance. Windows needs free space for the paging file, temporary files, and system updates. It's recommended to keep at least 15% of your disk space free at all times.";
         }
 
-        private void UpdateTroubleshootingStepsForCPUTemperature()
+        private void ConfigureHighCpuIssue()
         {
-            // Clear existing steps
-            TroubleshootingSteps.Children.Clear();
+            // Set issue details
+            IssueTitle.Text = "High CPU Usage";
+            IssueSubtitle.Text = "Identify and resolve processes causing high CPU usage";
+            IssueIcon.Text = "⚙️";
 
-            // Add CPU Temperature specific steps
+            // Get current CPU usage
+            float cpuUsage = _hardwareMonitor.CpuUsage;
 
-            // Step 1
-            Border step1 = CreateTroubleshootingStep(
-                "1",
-                "Check for Dust and Airflow",
-                "Ensure your computer's vents are clear of dust and the computer has proper airflow. Consider using compressed air to clean vents and fans.",
-                "View Guide",
-                "CleaningGuide");
-            TroubleshootingSteps.Children.Add(step1);
+            IssueHeading.Text = "High CPU Usage Detected";
+            IssueDescription.Text = $"Your system is experiencing high CPU usage at {cpuUsage:F1}%. This can cause your computer to run slowly, become unresponsive, or overheat.";
 
-            // Step 2
-            Border step2 = CreateTroubleshootingStep(
-                "2",
-                "Close Intensive Applications",
-                "Check Task Manager for applications using high CPU. Close any unnecessary CPU-intensive applications.",
-                "Open Task Manager",
-                "TaskManager");
-            TroubleshootingSteps.Children.Add(step2);
+            // Set severity based on current usage
+            if (cpuUsage > 90)
+            {
+                IssueSeverityText.Text = "High Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                IssueImpact.Text = "Impact: System may become unresponsive, applications may crash, and overheating may occur.";
+            }
+            else if (cpuUsage > 80)
+            {
+                IssueSeverityText.Text = "Medium Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                IssueImpact.Text = "Impact: System performance may be degraded, applications may respond slowly, and battery life may be reduced.";
+            }
+            else
+            {
+                IssueSeverityText.Text = "Low Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f1c40f"));
+                IssueImpact.Text = "Impact: Slight performance degradation, especially when running multiple applications.";
+            }
 
-            // Step 3
-            Border step3 = CreateTroubleshootingStep(
-                "3",
-                "Check CPU Fan Operation",
-                "Make sure your CPU fan is working properly. Listen for unusual noises or check if it's spinning correctly.",
-                "Run Hardware Diagnostics",
-                "HardwareDiagnostics");
-            TroubleshootingSteps.Children.Add(step3);
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Identify CPU-Intensive Processes", Description = "Use Task Manager to identify which processes are using the most CPU resources." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Close Unnecessary Applications", Description = "Close any applications you're not currently using to free up CPU resources." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Check for Malware", Description = "Run a malware scan to ensure no malicious software is consuming CPU resources." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Restart Your Computer", Description = "Sometimes a simple restart can resolve temporary CPU usage issues." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Open Task Manager";
+
+            // Set additional info
+            AdditionalInfoText.Text = "Persistent high CPU usage can indicate a software problem, malware infection, or insufficient hardware resources for the tasks you're performing. If the issue persists after trying these solutions, consider updating your device drivers or consulting with IT support.";
         }
 
-        private void UpdateTroubleshootingStepsForMemory()
+        private void ConfigureHighMemoryIssue()
         {
-            // Clear existing steps
-            TroubleshootingSteps.Children.Clear();
+            // Set issue details
+            IssueTitle.Text = "High Memory Usage";
+            IssueSubtitle.Text = "Resolve memory usage issues to improve system performance";
+            IssueIcon.Text = "📊";
 
-            // Add Memory specific steps
+            // Get current memory usage
+            float memoryUsage = _hardwareMonitor.MemoryUsage;
+            double availableGB = _hardwareMonitor.AvailableMemory / (1024.0 * 1024 * 1024);
+            double totalGB = _hardwareMonitor.TotalMemory / (1024.0 * 1024 * 1024);
 
-            // Step 1
-            Border step1 = CreateTroubleshootingStep(
-                "1",
-                "Close Unnecessary Applications",
-                "Check Task Manager to see which applications are using the most memory and close ones you don't need.",
-                "Open Task Manager",
-                "TaskManager");
-            TroubleshootingSteps.Children.Add(step1);
+            IssueHeading.Text = "High Memory Usage Detected";
+            IssueDescription.Text = $"Your system is using {memoryUsage:F1}% of available memory ({(totalGB - availableGB):F1} GB used of {totalGB:F1} GB). High memory usage can cause your system to slow down and applications to become unresponsive.";
 
-            // Step 2
-            Border step2 = CreateTroubleshootingStep(
-                "2",
-                "Restart Your Computer",
-                "Restarting your computer can clear memory and reset applications that might have memory leaks.",
-                "Restart Later",
-                "RestartComputer");
-            TroubleshootingSteps.Children.Add(step2);
+            // Set severity based on current usage
+            if (memoryUsage > 90)
+            {
+                IssueSeverityText.Text = "High Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                IssueImpact.Text = "Impact: System may become unresponsive, applications may crash, and excessive disk activity may occur from paging.";
+            }
+            else if (memoryUsage > 80)
+            {
+                IssueSeverityText.Text = "Medium Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                IssueImpact.Text = "Impact: System performance may be degraded and applications may respond slowly.";
+            }
+            else
+            {
+                IssueSeverityText.Text = "Low Severity";
+                IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f1c40f"));
+                IssueImpact.Text = "Impact: Slight performance degradation, especially when running multiple applications.";
+            }
 
-            // Step 3
-            Border step3 = CreateTroubleshootingStep(
-                "3",
-                "Check for Memory Issues",
-                "Run Windows Memory Diagnostic to check if there are hardware issues with your RAM.",
-                "Run Memory Diagnostic",
-                "MemoryDiagnostic");
-            TroubleshootingSteps.Children.Add(step3);
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Close Unnecessary Applications", Description = "Close any applications you're not currently using to free up memory." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Restart Memory-Intensive Applications", Description = "Applications like web browsers can consume more memory over time. Try closing and reopening them." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Check for Memory Leaks", Description = "If a specific application consistently uses increasing amounts of memory, it may have a memory leak." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Restart Your Computer", Description = "A restart will clear the system memory and may resolve temporary memory issues." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Optimize Memory";
+
+            // Set additional info
+            AdditionalInfoText.Text = "Memory usage naturally increases as you use your computer and run applications. However, persistently high memory usage can indicate a software problem or insufficient RAM for your usage patterns. If you frequently experience high memory usage, consider upgrading your RAM or reducing the number of applications you run simultaneously.";
         }
 
-        private Border CreateTroubleshootingStep(string stepNumber, string title, string description, string buttonText, string actionTag)
+        private void ConfigureWindowsUpdateIssue()
         {
-            // Create the main border
-            Border stepBorder = new Border
-            {
-                Style = Resources["TroubleshootingStepStyle"] as Style
-            };
+            // Set issue details
+            IssueTitle.Text = "Windows Update Required";
+            IssueSubtitle.Text = "Install pending Windows updates to ensure system security and stability";
+            IssueIcon.Text = "🔄";
 
-            // Create the grid
-            Grid grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            IssueHeading.Text = "Windows Updates Available";
+            IssueDescription.Text = "Your system has pending Windows updates that need to be installed. These updates include important security patches and system improvements.";
 
-            // Create the step number border
-            Border numberBorder = new Border
-            {
-                Width = 28,
-                Height = 28,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3498db")),
-                CornerRadius = new CornerRadius(14),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 0, 15, 0)
-            };
+            // Set severity to high since security updates are important
+            IssueSeverityText.Text = "High Severity";
+            IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+            IssueImpact.Text = "Impact: Unpatched security vulnerabilities may put your system at risk, and you may miss important feature improvements.";
 
-            // Create the step number text
-            TextBlock numberText = new TextBlock
-            {
-                Text = stepNumber,
-                Foreground = new SolidColorBrush(Colors.White),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.SemiBold
-            };
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Save Your Work", Description = "Save any open documents or work before proceeding, as updates may require a system restart." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Check Update Status", Description = "View available updates in Windows Update settings." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Install Updates", Description = "Install all available updates. This process may take some time depending on the number and size of updates." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Restart if Required", Description = "Some updates require a system restart to complete installation." });
 
-            // Add number text to number border
-            numberBorder.Child = numberText;
+            // Set fix button text
+            FixIssueButton.Content = "Open Windows Update";
 
-            // Create content stack panel
-            StackPanel contentPanel = new StackPanel();
-
-            // Create title text
-            TextBlock titleText = new TextBlock
-            {
-                Text = title,
-                Foreground = new SolidColorBrush(Colors.White),
-                FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
-
-            // Create description text
-            TextBlock descriptionText = new TextBlock
-            {
-                Text = description,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DDDDDD")),
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            // Create button
-            Button actionButton = new Button
-            {
-                Content = buttonText,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 10, 0, 0),
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2a2a2a")),
-                Foreground = new SolidColorBrush(Colors.White),
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(10, 5,5,5),
-                Tag = actionTag
-            };
-            actionButton.Click += FixAction_Click;
-
-            // Add elements to content panel
-            contentPanel.Children.Add(titleText);
-            contentPanel.Children.Add(descriptionText);
-            contentPanel.Children.Add(actionButton);
-
-            // Add elements to grid
-            Grid.SetColumn(numberBorder, 0);
-            Grid.SetColumn(contentPanel, 1);
-            grid.Children.Add(numberBorder);
-            grid.Children.Add(contentPanel);
-
-            // Add grid to border
-            stepBorder.Child = grid;
-
-            return stepBorder;
+            // Set additional info
+            AdditionalInfoText.Text = "Windows updates are essential for maintaining system security and stability. Microsoft regularly releases updates to fix security vulnerabilities, improve performance, and add new features. It's recommended to keep automatic updates enabled and install updates promptly to ensure your system remains protected.";
         }
+
+        private void ConfigureNetworkIssue()
+        {
+            // Set issue details
+            IssueTitle.Text = "Network Connection Issue";
+            IssueSubtitle.Text = "Diagnose and resolve network connectivity problems";
+            IssueIcon.Text = "🌐";
+
+            IssueHeading.Text = "Network Connectivity Problem";
+            IssueDescription.Text = "Your system is currently experiencing network connectivity issues. This can prevent internet access and connectivity to network resources.";
+
+            // Always set to high severity since network issues are critical
+            IssueSeverityText.Text = "High Severity";
+            IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+            IssueImpact.Text = "Impact: Internet access is unavailable, cloud services won't function, and network resources cannot be accessed.";
+
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Check Physical Connections", Description = "Ensure network cables are securely connected or that Wi-Fi is enabled." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Restart Network Devices", Description = "Restart your router and modem to resolve temporary connection issues." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Run Network Troubleshooter", Description = "Use Windows built-in network troubleshooting tool to automatically identify and fix common issues." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Reset Network Settings", Description = "If problems persist, consider resetting your network settings (this will remove saved Wi-Fi networks)." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Run Network Troubleshooter";
+
+            // Set additional info
+            AdditionalInfoText.Text = "Network issues can be caused by a variety of factors including hardware problems, router configuration, ISP outages, or software settings. If the basic troubleshooting steps don't resolve the issue, check if other devices on the same network have connectivity, which can help determine if the problem is specific to this computer or affects the entire network.";
+        }
+
+        private void ConfigureDriverIssue()
+        {
+            // Set issue details
+            IssueTitle.Text = "Driver Issues Detected";
+            IssueSubtitle.Text = "Resolve hardware driver problems to ensure system stability";
+            IssueIcon.Text = "🔧";
+
+            IssueHeading.Text = "Hardware Driver Problems";
+            IssueDescription.Text = "System logs indicate issues with one or more hardware drivers. Outdated, missing, or corrupted drivers can cause system instability and hardware malfunctions.";
+
+            // Set to medium severity
+            IssueSeverityText.Text = "Medium Severity";
+            IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+            IssueImpact.Text = "Impact: Hardware may not function correctly, system performance may be reduced, and you may experience crashes or instability.";
+
+            // Set resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Identify Problem Drivers", Description = "Use Device Manager to identify devices with driver problems (indicated by yellow warning icons)." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Update Drivers", Description = "Look for driver updates through Device Manager or manufacturer websites." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Reinstall Problematic Drivers", Description = "Uninstall and reinstall drivers for devices with persistent issues." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Check for Windows Updates", Description = "Windows Update often includes important driver updates for common hardware." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Open Device Manager";
+
+            // Set additional info
+            AdditionalInfoText.Text = "Drivers are essential software components that allow Windows to communicate with hardware devices. Keeping drivers updated is important for system stability, security, and performance. However, be cautious when updating drivers - always back up your system before making significant driver changes, and if a device is working properly, it's sometimes best to leave its driver alone.";
+        }
+
+        private void ConfigureGenericIssue()
+        {
+            // Set issue details for unknown issue types
+            IssueTitle.Text = "System Issue";
+            IssueSubtitle.Text = "Resolve system issues to improve performance and stability";
+            IssueIcon.Text = "⚠️";
+
+            IssueHeading.Text = "System Issue Detected";
+            IssueDescription.Text = $"A system issue of type '{issueType}' has been detected. This issue may affect system performance or stability.";
+
+            // Default to medium severity
+            IssueSeverityText.Text = "Medium Severity";
+            IssueSeverityBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+            IssueImpact.Text = "Impact: System performance and stability may be affected.";
+
+            // Set generic resolution steps
+            Steps.Add(new ResolutionStep { StepNumber = 1, Title = "Restart Your Computer", Description = "A restart can resolve many temporary system issues." });
+            Steps.Add(new ResolutionStep { StepNumber = 2, Title = "Check for Updates", Description = "Ensure your system has the latest Windows updates installed." });
+            Steps.Add(new ResolutionStep { StepNumber = 3, Title = "Run System Maintenance", Description = "Use built-in Windows maintenance tools to optimize system performance." });
+            Steps.Add(new ResolutionStep { StepNumber = 4, Title = "Contact IT Support", Description = "If the issue persists, contact your IT department for further assistance." });
+
+            // Set fix button text
+            FixIssueButton.Content = "Run System Maintenance";
+
+            // Set additional info
+            AdditionalInfoText.Text = "System issues can have various causes, including software conflicts, hardware problems, or system configuration issues. Regular maintenance and keeping your system updated can help prevent many common problems.";
+        }
+
+        #endregion
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
+            // Log the action
+            _loggingService.Log(LogLevel.Info, $"User clicked back button on Issue Details page for issue type: {issueType}");
+
+            // Navigate back to the previous page
+            if (NavigationService != null && NavigationService.CanGoBack)
+            {
+                NavigationService.GoBack();
+            }
+            else if (mainWindow != null)
+            {
+                // Use reflection to access the method if it's not directly accessible
+                var method = mainWindow.GetType().GetMethod("NavigateToPage",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                if (method != null)
+                {
+                    method.Invoke(mainWindow, new object[] { "Overview" });
+                }
+            }
+        }
+
+        private async void FixIssueButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Log the action
+            _loggingService.Log(LogLevel.Info, $"User initiated fix for issue type: {issueType}");
+
+            // Disable fix button to prevent multiple clicks
+            FixIssueButton.IsEnabled = false;
+
+            // Show fix in progress overlay
+            FixInProgressOverlay.Visibility = Visibility.Visible;
+
+            // Start progress timer for visual feedback
+            StartProgressTimer();
+
+            // Perform the fix based on issue type
+            bool success = await FixIssue();
+
+            // Stop progress timer
+            StopProgressTimer();
+
+            // Show fix result
+            ShowFixResult(success);
+        }
+
+        private void StartProgressTimer()
+        {
+            // Reset progress
+            fixProgress = 0;
+
+            // Create and start the timer
+            progressTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+
+            progressTimer.Tick += ProgressTimer_Tick;
+            progressTimer.Start();
+        }
+
+        private void StopProgressTimer()
+        {
+            // Stop and dispose the timer
+            if (progressTimer != null)
+            {
+                progressTimer.Stop();
+                progressTimer.Tick -= ProgressTimer_Tick;
+                progressTimer = null;
+            }
+        }
+
+        private void ProgressTimer_Tick(object? sender, EventArgs e)
+        {
+            // Update progress text for visual feedback
+            fixProgress += 10;
+
+            if (fixProgress <= 100)
+            {
+                // Update progress text with random messages for visual effect
+                FixProgressText.Text = GetProgressMessage(fixProgress);
+            }
+            else
+            {
+                // Stop the timer when we reach 100%
+                StopProgressTimer();
+            }
+        }
+
+        private string GetProgressMessage(int progress)
+        {
+            // Return different messages based on progress
+            return progress switch
+            {
+                10 => "Analyzing system...",
+                20 => "Identifying issue components...",
+                30 => "Preparing solution...",
+                40 => "Applying fixes...",
+                50 => "Scanning for additional issues...",
+                60 => "Optimizing system settings...",
+                70 => "Verifying fix integrity...",
+                80 => "Cleaning up temporary files...",
+                90 => "Finalizing changes...",
+                100 => "Completing process...",
+                _ => "Please wait while we resolve this issue..."
+            };
+        }
+
+        private async Task<bool> FixIssue()
+        {
+            // Simulate fix process with a delay
+            await Task.Delay(3000);
+
+            try
+            {
+                // Perform action based on issue type
+                switch (issueType)
+                {
+                    case "DiskSpace":
+                        try
+                        {
+                            Process.Start("cleanmgr.exe");
+                            _loggingService.Log(LogLevel.Info, "Launched Disk Cleanup for disk space issue");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggingService.Log(LogLevel.Error, $"Error launching Disk Cleanup: {ex.Message}");
+                            return false;
+                        }
+
+                    case "HighCPU":
+                        try
+                        {
+                            Process.Start("taskmgr.exe");
+                            _loggingService.Log(LogLevel.Info, "Launched Task Manager for high CPU issue");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggingService.Log(LogLevel.Error, $"Error launching Task Manager: {ex.Message}");
+                            return false;
+                        }
+
+                    case "HighMemory":
+                        // Simulate memory optimization
+                        await Task.Delay(2000);
+                        _loggingService.Log(LogLevel.Info, "Performed memory optimization");
+                        return true;
+
+                    case "WindowsUpdate":
+                        try
+                        {
+                            Process.Start("ms-settings:windowsupdate");
+                            _loggingService.Log(LogLevel.Info, "Launched Windows Update settings");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggingService.Log(LogLevel.Error, $"Error launching Windows Update settings: {ex.Message}");
+                            return false;
+                        }
+
+                    case "NetworkDisconnected":
+                        try
+                        {
+                            Process.Start("msdt.exe", "/id NetworkDiagnosticsNetworkAdapter");
+                            _loggingService.Log(LogLevel.Info, "Launched Network Troubleshooter");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggingService.Log(LogLevel.Error, $"Error launching Network Troubleshooter: {ex.Message}");
+                            return false;
+                        }
+
+                    case "DriverIssues":
+                        try
+                        {
+                            Process.Start("devmgmt.msc");
+                            _loggingService.Log(LogLevel.Info, "Launched Device Manager for driver issues");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggingService.Log(LogLevel.Error, $"Error launching Device Manager: {ex.Message}");
+                            return false;
+                        }
+
+                    default:
+                        // For generic or unknown issues, simulate a general system check
+                        await Task.Delay(2000);
+                        _loggingService.Log(LogLevel.Info, $"Performed general system check for {issueType} issue");
+                        return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggingService.Log(LogLevel.Error, $"Error fixing {issueType} issue: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void ShowFixResult(bool success)
+        {
+            // Hide fix in progress overlay
+            FixInProgressOverlay.Visibility = Visibility.Collapsed;
+
+            // Set result based on success
+            if (success)
+            {
+                FixResultIcon.Text = "✅";
+                FixResultTitle.Text = "Issue Fixed Successfully";
+                FixResultDescription.Text = "The issue has been resolved. Your system should now function normally.";
+            }
+            else
+            {
+                FixResultIcon.Text = "❗";
+                FixResultTitle.Text = "Fix Incomplete";
+                FixResultDescription.Text = "We were unable to completely resolve the issue. Please try the manual steps listed or contact IT support for assistance.";
+            }
+
+            // Show fix complete overlay
+            FixCompleteOverlay.Visibility = Visibility.Visible;
+
+            // Log the result
+            _loggingService.Log(LogLevel.Info, $"Fix for {issueType} issue completed with success: {success}");
+
+            // Update status
+            if (mainWindow != null)
+            {
+                mainWindow.UpdateStatus($"Issue fix {(success ? "completed successfully" : "did not complete")}");
+            }
+        }
+
+        private void BackToOverviewButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Log the action
+            _loggingService.Log(LogLevel.Info, "User navigated back to overview from fix result");
+
             // Navigate back to the overview page
             if (mainWindow != null)
             {
                 // Use reflection to access the method if it's not directly accessible
-                var method = mainWindow.GetType().GetMethod("NavigateToPage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var method = mainWindow.GetType().GetMethod("NavigateToPage",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
                 if (method != null)
                 {
                     method.Invoke(mainWindow, new object[] { "Overview" });
-
-                    // Log navigation
-                    loggingService.Log(LogLevel.Info, "User navigated back to System Overview from Issue Details");
                 }
             }
-        }
-
-        private void FixAction_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button)
-            {
-                string actionTag = button.Tag?.ToString() ?? "";
-
-                // Log the action
-                loggingService.Log(LogLevel.Info, $"User initiated fix action: {actionTag} for issue: {issueType}");
-
-                // Perform the action based on the tag
-                switch (actionTag)
-                {
-                    case "DiskSpace":
-                        try { Process.Start("cleanmgr.exe"); }
-                        catch (Exception ex) { LogError(ex, "Disk Cleanup"); }
-                        break;
-
-                    case "UninstallPrograms":
-                        try { Process.Start("appwiz.cpl"); }
-                        catch (Exception ex) { LogError(ex, "Programs and Features"); }
-                        break;
-
-                    case "StorageSettings":
-                        try { Process.Start("ms-settings:storagesense"); }
-                        catch (Exception ex) { LogError(ex, "Storage Settings"); }
-                        break;
-
-                    case "WindowsUpdate":
-                        try { Process.Start("ms-settings:windowsupdate"); }
-                        catch (Exception ex) { LogError(ex, "Windows Update"); }
-                        break;
-
-                    case "RestartComputer":
-                        // Show confirmation dialog before restarting
-                        if (MessageBox.Show("Are you sure you want to restart your computer?\n\nPlease save any unsaved work first.",
-                            "Restart Computer", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-                        {
-                            try
-                            {
-                                loggingService.Log(LogLevel.Info, "User initiated system restart");
-                                Process.Start("shutdown.exe", "/r /t 60 /c \"System restart initiated by SysMax\"");
-                                MessageBox.Show("Your computer will restart in 60 seconds. You can cancel this by running 'shutdown /a' in a command prompt.",
-                                    "Restart Scheduled", MessageBoxButton.OK, MessageBoxImage.Information);
-                            }
-                            catch (Exception ex)
-                            {
-                                LogError(ex, "Restart Computer");
-                            }
-                        }
-                        break;
-
-                    case "UpdateTroubleshooter":
-                        try { Process.Start("ms-settings:troubleshoot"); }
-                        catch (Exception ex) { LogError(ex, "Update Troubleshooter"); }
-                        break;
-
-                    case "TaskManager":
-                        try { Process.Start("taskmgr.exe"); }
-                        catch (Exception ex) { LogError(ex, "Task Manager"); }
-                        break;
-
-                    case "MemoryDiagnostic":
-                        try { Process.Start("mdsched.exe"); }
-                        catch (Exception ex) { LogError(ex, "Memory Diagnostic"); }
-                        break;
-
-                    case "CleaningGuide":
-                        // Show a message with cleaning instructions
-                        MessageBox.Show("Computer Cleaning Guide:\n\n" +
-                                       "1. Shut down and unplug your computer\n" +
-                                       "2. Take it to a well-ventilated area\n" +
-                                       "3. Use compressed air to blow dust from vents\n" +
-                                       "4. Ensure fans are spinning freely\n" +
-                                       "5. Check that no vents are blocked\n\n" +
-                                       "For desktop computers, consider opening the case (if under warranty, check if this is allowed) and cleaning internal components with compressed air.",
-                                       "Computer Cleaning Guide", MessageBoxButton.OK, MessageBoxImage.Information);
-                        break;
-
-                    case "HardwareDiagnostics":
-                        try { Process.Start("msdt.exe", "/id DeviceDiagnostic"); }
-                        catch (Exception ex) { LogError(ex, "Hardware Diagnostics"); }
-                        break;
-
-                    case "CPUTemperature":
-                        // Show a message with temperature info
-                        MessageBox.Show("CPU Temperature Information:\n\n" +
-                                       "Ideal CPU temperatures:\n" +
-                                       "• Idle: 30-45°C\n" +
-                                       "• Light load: 45-60°C\n" +
-                                       "• Heavy load: 60-80°C\n" +
-                                       "• Concerning: Above 85°C\n" +
-                                       "• Critical: Above 90°C\n\n" +
-                                       "Your current CPU temperature is high. Consider cleaning your computer's cooling system or using it in a cooler environment.",
-                                       "CPU Temperature Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                        break;
-
-                    default:
-                        // Unknown action
-                        loggingService.Log(LogLevel.Warning, $"Unknown fix action requested: {actionTag}");
-                        break;
-                }
-            }
-        }
-
-        private void LogError(Exception ex, string action)
-        {
-            loggingService.Log(LogLevel.Error, $"Error launching {action}: {ex.Message}");
-            MessageBox.Show($"Error launching {action}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

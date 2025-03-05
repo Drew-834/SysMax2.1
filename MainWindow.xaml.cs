@@ -474,6 +474,21 @@ namespace SysMax2._1
                     }
                     break;
 
+                case "SystemInfo":
+                    // Create System Information Page
+                    newPage = new Pages.SystemInfoPage();
+                    break;
+
+                case "Logs":
+                    // Create Log Viewer Page
+                    newPage = new Pages.LogViewerPage();
+                    break;
+
+                case "Issues":
+                    // Create Issue Details Page with default issue type
+                    newPage = new Pages.IssueDetailsPage("DiskSpace");
+                    break;
+
                 case "Settings":
                     // Create ApplicationSettingsPage
                     newPage = new Pages.ApplicationSettingsPage();

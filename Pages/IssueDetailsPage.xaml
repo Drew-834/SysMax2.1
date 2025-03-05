@@ -5,302 +5,158 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SysMax2._1.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="650" d:DesignWidth="1000"
+      d:DesignHeight="720" d:DesignWidth="1020"
       Title="Issue Details">
 
-    <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="10"/>
-        </Style>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-        </Style>
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="20,20,20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1f6aa5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Button x:Name="BackButton" Grid.Column="0" Click="BackButton_Click"
+                    Background="Transparent" BorderThickness="0" Margin="0,0,15,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="←" FontSize="20" Foreground="#3498db" Margin="0,0,5,0"/>
+                    <TextBlock Text="Back" Foreground="#3498db" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
 
-        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#BBBBBB"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,15,0,10"/>
-        </Style>
+            <StackPanel Grid.Column="1">
+                <TextBlock x:Name="IssueTitle" Text="Issue Details" FontSize="24" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock x:Name="IssueSubtitle" Text="View and resolve system issues" 
+                           Foreground="#AAAAAA" Margin="0,5,0,0"/>
+            </StackPanel>
 
-        <Style x:Key="TroubleshootingStepStyle" TargetType="Border">
-            <Setter Property="Background" Value="#2a2a2a"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-        </Style>
-    </Page.Resources>
+            <Button x:Name="FixIssueButton" Grid.Column="2" Content="Fix Issue" Click="FixIssueButton_Click"
+                    Background="#3498db" Foreground="White" BorderThickness="0" 
+                    Padding="15,8"/>
+        </Grid>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="20">
+        <!-- Content Area -->
+        <Grid Grid.Row="1" Margin="20,10,20,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Grid Grid.Row="0">
-                <TextBlock Text="Issue Details" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="BackButton" Content="← Back to Overview" Style="{StaticResource ActionButtonStyle}" Click="BackButton_Click"/>
-                </StackPanel>
-            </Grid>
-
-            <!-- Issue Summary -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+            <!-- Issue Card -->
+            <Border Grid.Row="0" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                    CornerRadius="8" Padding="20" Margin="0,0,0,15">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Issue Summary" Style="{StaticResource CardHeaderStyle}"/>
+                    <TextBlock x:Name="IssueIcon" Grid.Column="0" Text="⚠️" FontSize="48" Margin="0,0,20,0"/>
 
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock x:Name="IssueHeading" Text="Issue Heading" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                        <TextBlock x:Name="IssueDescription" Text="Detailed description of the issue" 
+                                   Foreground="#BBBBBB" TextWrapping="Wrap" Margin="0,10,0,0"/>
 
-                        <TextBlock x:Name="IssueIcon" Grid.Column="0" Text="⚠️" FontSize="48" 
-                                   Margin="0,0,20,0" VerticalAlignment="Top"/>
+                        <Border x:Name="IssueSeverityBorder" CornerRadius="4" Padding="8,4" Margin="0,15,0,0" 
+                                HorizontalAlignment="Left" Background="#f39c12">
+                            <TextBlock x:Name="IssueSeverityText" Text="Medium Severity" Foreground="White" FontWeight="SemiBold"/>
+                        </Border>
 
-                        <StackPanel Grid.Column="1">
-                            <TextBlock x:Name="IssueTitle" Text="Disk Space Low" FontSize="18" 
-                                       Foreground="White" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="IssueImpact" Text="Impact: This issue may affect system performance and stability."
+                                  Foreground="#AAAAAA" Margin="0,15,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                            <TextBlock x:Name="IssueDescription" TextWrapping="Wrap" Foreground="#DDDDDD"
-                                       Text="Your disk is getting full. This might slow down your computer and prevent updates from installing correctly."/>
+            <!-- Content Switcher - Different panels for different issue types -->
+            <Border Grid.Row="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                    CornerRadius="8" Padding="20">
+                <Grid>
+                    <!-- Main Content Area -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                            <Grid Margin="0,15,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                            <!-- Resolution Steps -->
+                            <StackPanel Grid.Row="0">
+                                <TextBlock Text="Resolution Steps" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,15"/>
 
-                                <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                                    <TextBlock Text="Severity" Foreground="#BBBBBB" FontSize="12"/>
-                                    <TextBlock x:Name="IssueSeverity" Text="Medium" Foreground="#f39c12" FontWeight="SemiBold"/>
-                                </StackPanel>
+                                <ItemsControl x:Name="ResolutionSteps">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Detected" Foreground="#BBBBBB" FontSize="12"/>
-                                    <TextBlock x:Name="IssueDetected" Text="2023-02-26 10:15 AM" Foreground="#DDDDDD"/>
-                                </StackPanel>
+                                                <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15" 
+                                                        Background="#3498db" VerticalAlignment="Top" Margin="0,0,15,0">
+                                                    <TextBlock Text="{Binding StepNumber}" Foreground="White" FontWeight="Bold" 
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Impact" Foreground="#BBBBBB" FontSize="12"/>
-                                    <TextBlock x:Name="IssueImpact" Text="Performance" Foreground="#DDDDDD"/>
-                                </StackPanel>
-                            </Grid>
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Description}" Foreground="#BBBBBB" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- Issue-Specific Content -->
+                            <ContentControl x:Name="IssueSpecificContent" Grid.Row="1" Margin="0,20,0,0"/>
+
+                            <!-- Additional Information -->
+                            <Expander Grid.Row="2" Header="Additional Information" Margin="0,15,0,0" 
+                                      IsExpanded="False" Foreground="White" Background="#2a2a2a">
+                                <TextBlock x:Name="AdditionalInfoText" TextWrapping="Wrap" Margin="15" Foreground="#BBBBBB"/>
+                            </Expander>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <!-- Fix In Progress Overlay -->
+                    <Grid x:Name="FixInProgressOverlay" Visibility="Collapsed" Background="#80000000">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="Fixing Issue..." FontSize="20" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center"/>
+                            <ProgressBar Width="300" Height="10" IsIndeterminate="True" Margin="0,15,0,0"/>
+                            <TextBlock x:Name="FixProgressText" Text="Please wait while we resolve this issue..." 
+                                       Foreground="#BBBBBB" HorizontalAlignment="Center" Margin="0,15,0,0"/>
                         </StackPanel>
+                    </Grid>
+
+                    <!-- Fix Complete Overlay -->
+                    <Grid x:Name="FixCompleteOverlay" Visibility="Collapsed" Background="#80000000">
+                        <Border Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                                CornerRadius="8" Padding="30" MaxWidth="400">
+                            <StackPanel>
+                                <TextBlock x:Name="FixResultIcon" Text="✅" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                                <TextBlock x:Name="FixResultTitle" Text="Issue Fixed Successfully" FontSize="18" FontWeight="SemiBold" 
+                                           Foreground="White" HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="FixResultDescription" Text="The issue has been resolved. Your system should now function normally."
+                                           TextWrapping="Wrap" Foreground="#BBBBBB" HorizontalAlignment="Center" 
+                                           TextAlignment="Center" Margin="0,15,0,20"/>
+                                <Button x:Name="BackToOverviewButton" Content="Back to System Overview" Click="BackToOverviewButton_Click"
+                                        Background="#3498db" Foreground="White" BorderThickness="0" 
+                                        Padding="15,8" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Grid>
             </Border>
-
-            <!-- How to Fix -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="How to Fix" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <StackPanel Grid.Row="1">
-                        <TextBlock Text="RECOMMENDED ACTIONS" Style="{StaticResource SectionTitleStyle}"/>
-
-                        <!-- Steps Container -->
-                        <StackPanel x:Name="TroubleshootingSteps">
-                            <!-- Step 1 -->
-                            <Border Style="{StaticResource TroubleshootingStepStyle}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Width="28" Height="28" Background="#3498db" CornerRadius="14"
-                                           HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,15,0">
-                                        <TextBlock Text="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Run Disk Cleanup" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                        <TextBlock TextWrapping="Wrap" Foreground="#DDDDDD">
-                                            Disk Cleanup will remove temporary files, emptying the Recycle Bin, and removing other system files that are no longer needed.
-                                        </TextBlock>
-                                        <Button Content="Run Disk Cleanup" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                               Background="#2a2a2a" Foreground="White" BorderThickness="0" Padding="10,5"
-                                               Tag="DiskSpace" Click="FixAction_Click"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- Step 2 -->
-                            <Border Style="{StaticResource TroubleshootingStepStyle}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Width="28" Height="28" Background="#3498db" CornerRadius="14"
-                                           HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,15,0">
-                                        <TextBlock Text="2" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Uninstall Unnecessary Programs" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                        <TextBlock TextWrapping="Wrap" Foreground="#DDDDDD">
-                                            Remove applications you no longer use to free up additional disk space.
-                                        </TextBlock>
-                                        <Button Content="Open Programs and Features" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                               Background="#2a2a2a" Foreground="White" BorderThickness="0" Padding="10,5"
-                                               Tag="UninstallPrograms" Click="FixAction_Click"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- Step 3 -->
-                            <Border Style="{StaticResource TroubleshootingStepStyle}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Width="28" Height="28" Background="#3498db" CornerRadius="14"
-                                           HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,15,0">
-                                        <TextBlock Text="3" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Use Storage Sense" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                        <TextBlock TextWrapping="Wrap" Foreground="#DDDDDD">
-                                            Enable Windows Storage Sense to automatically free up space by removing temporary files and content from the recycle bin.
-                                        </TextBlock>
-                                        <Button Content="Open Storage Settings" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                               Background="#2a2a2a" Foreground="White" BorderThickness="0" Padding="10,5"
-                                               Tag="StorageSettings" Click="FixAction_Click"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Additional Information -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Additional Information" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <StackPanel Grid.Row="1">
-                        <TextBlock x:Name="AdditionalInfoText" TextWrapping="Wrap" Foreground="#DDDDDD">
-                            Having enough free disk space is important for your computer's performance. Windows and applications need free space for temporary files, updates, and virtual memory.
-                            <LineBreak/><LineBreak/>
-                            When disk space gets low, your computer may:
-                            <LineBreak/>
-                            • Run slower
-                            <LineBreak/>
-                            • Have trouble installing updates
-                            <LineBreak/>
-                            • Show more frequent disk errors
-                            <LineBreak/>
-                            • Experience unexpected crashes
-                            <LineBreak/><LineBreak/>
-                            It's recommended to keep at least 15-20% of your disk space free at all times for optimal performance.
-                        </TextBlock>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- IT Professionals Section -->
-            <Expander Grid.Row="4" Header="For IT Professionals" Margin="10,15,10,0" 
-                     Background="#252525" Foreground="White" BorderBrush="#333333" BorderThickness="1">
-                <StackPanel Margin="10">
-                    <TextBlock x:Name="ITProInfoText" TextWrapping="Wrap" Foreground="#DDDDDD">
-                        <Run FontWeight="SemiBold">Technical Details:</Run>
-                        <LineBreak/>
-                        Low disk space can impact system performance through reduced paging file size, fragmentation, and slower I/O operations. 
-                        The typical threshold for performance degradation begins at 10% remaining free space.
-                        <LineBreak/><LineBreak/>
-                        <Run FontWeight="SemiBold">System Information:</Run>
-                        <LineBreak/>
-                        • Drive: C:\
-                        <LineBreak/>
-                        • File System: NTFS
-                        <LineBreak/>
-                        • Total Size: 500 GB
-                        <LineBreak/>
-                        • Free Space: 58.5 GB (11.7%)
-                        <LineBreak/>
-                        • Fragmentation Level: 12%
-                        <LineBreak/><LineBreak/>
-                        <Run FontWeight="SemiBold">Enterprise Solutions:</Run>
-                        <LineBreak/>
-                        • Deploy disk quotas through Group Policy
-                        <LineBreak/>
-                        • Use PowerShell to automate cleanup: Get-ChildItem -Path C:\Windows\Temp | Remove-Item -Force -Recurse
-                        <LineBreak/>
-                        • Schedule regular DISM cleanup: DISM.exe /Online /Cleanup-Image /StartComponentCleanup
-                        <LineBreak/>
-                        • Consider implementing Storage Spaces for hardware-level capacity expansion
-                    </TextBlock>
-                </StackPanel>
-            </Expander>
         </Grid>
-    </ScrollViewer>
+    </Grid>
 </Page>

@@ -5,178 +5,176 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SysMax2._1.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="650" d:DesignWidth="1000"
-      Title="System Logs">
+      d:DesignHeight="720" d:DesignWidth="1020"
+      Title="Log Viewer">
 
-    <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="10"/>
-        </Style>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-        </Style>
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="20,20,20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1f6aa5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="System Logs" FontSize="24" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock Text="View and analyze system event logs and application logs" 
+                           Foreground="#AAAAAA" Margin="0,5,0,0"/>
+            </StackPanel>
 
-        <Style x:Key="LogTextStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#1a1a1a"/>
-            <Setter Property="Foreground" Value="#DDDDDD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="10"/>
-        </Style>
-
-        <Style x:Key="FilterButtonStyle" TargetType="ToggleButton">
-            <Setter Property="Background" Value="#2d2d2d"/>
-            <Setter Property="Foreground" Value="#BBBBBB"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Background" Value="#3498db"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Header -->
-            <Grid Grid.Row="0">
-                <TextBlock Text="System Logs" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource ActionButtonStyle}" Click="RefreshButton_Click"/>
-                    <Button x:Name="ExportButton" Content="Export Logs" Style="{StaticResource ActionButtonStyle}" Margin="10,5,0,5" Click="ExportButton_Click"/>
-                </StackPanel>
-            </Grid>
-
-            <!-- Filter Controls -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Log Filters" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Show:" Foreground="#BBBBBB" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ToggleButton x:Name="InfoFilter" Content="Info" IsChecked="True" Style="{StaticResource FilterButtonStyle}" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                            <ToggleButton x:Name="WarningFilter" Content="Warning" IsChecked="True" Style="{StaticResource FilterButtonStyle}" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                            <ToggleButton x:Name="ErrorFilter" Content="Error" IsChecked="True" Style="{StaticResource FilterButtonStyle}" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                            <ToggleButton x:Name="CriticalFilter" Content="Critical" IsChecked="True" Style="{StaticResource FilterButtonStyle}" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                        </StackPanel>
-
-                        <TextBox x:Name="SearchBox" Grid.Column="1" Margin="10,0" Padding="10,5" 
-                                Background="#333333" Foreground="White" BorderThickness="0"
-                                Text="Search logs..." GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus" 
-                                TextChanged="SearchBox_TextChanged"/>
-
-                        <ComboBox x:Name="TimeRangeComboBox" Grid.Column="2" Width="150" 
-                                 Background="#333333" Foreground="White" BorderThickness="0"
-                                 SelectedIndex="0" SelectionChanged="TimeRangeComboBox_SelectionChanged">
-                            <ComboBoxItem Content="Recent logs"/>
-                            <ComboBoxItem Content="Today"/>
-                            <ComboBoxItem Content="Yesterday"/>
-                            <ComboBoxItem Content="Last 7 days"/>
-                            <ComboBoxItem Content="All logs"/>
-                        </ComboBox>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!-- Log Content -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <TextBlock Text="Log Entries" Style="{StaticResource CardHeaderStyle}" Margin="0"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="CopyButton" Content="Copy to Clipboard" Padding="10,5" 
-                                   Background="#2d2d2d" Foreground="White" BorderThickness="0" Click="CopyButton_Click"/>
-                            <Button x:Name="ClearButton" Content="Clear Display" Padding="10,5" Margin="10,0,0,0"
-                                   Background="#2d2d2d" Foreground="White" BorderThickness="0" Click="ClearButton_Click"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBox x:Name="LogTextBox" Grid.Row="1" Style="{StaticResource LogTextStyle}" 
-                            IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" 
-                            HorizontalScrollBarVisibility="Auto" AcceptsReturn="True" Margin="0,10,0,0"/>
-                </Grid>
-            </Border>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="RefreshButton" Content="Refresh" Click="RefreshButton_Click"
+                        Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                        Padding="12,6" Margin="0,0,10,0"/>
+                <Button x:Name="ExportButton" Content="Export Logs" Click="ExportButton_Click"
+                        Background="#3498db" Foreground="White" BorderThickness="0" 
+                        Padding="12,6"/>
+            </StackPanel>
         </Grid>
-    </ScrollViewer>
+
+        <!-- Filter Controls -->
+        <Grid Grid.Row="1" Margin="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Log Type:" VerticalAlignment="Center" 
+                       Foreground="#BBBBBB" Margin="0,0,10,0"/>
+            <ComboBox Grid.Column="1" x:Name="LogTypeFilter" SelectionChanged="Filter_Changed"
+                      Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                <ComboBoxItem Content="All Logs" IsSelected="True"/>
+                <ComboBoxItem Content="System Events"/>
+                <ComboBoxItem Content="Application Logs"/>
+                <ComboBoxItem Content="Security Logs"/>
+                <ComboBoxItem Content="Hardware Logs"/>
+            </ComboBox>
+
+            <TextBlock Grid.Column="2" Text="Severity:" VerticalAlignment="Center" 
+                       Foreground="#BBBBBB" Margin="15,0,10,0"/>
+            <ComboBox Grid.Column="3" x:Name="SeverityFilter" SelectionChanged="Filter_Changed"
+                      Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                <ComboBoxItem Content="All Severities" IsSelected="True"/>
+                <ComboBoxItem Content="Info"/>
+                <ComboBoxItem Content="Warning"/>
+                <ComboBoxItem Content="Error"/>
+                <ComboBoxItem Content="Critical"/>
+            </ComboBox>
+
+            <TextBlock Grid.Column="4" Text="Search:" VerticalAlignment="Center" 
+                       Foreground="#BBBBBB" Margin="15,0,10,0"/>
+            <TextBox Grid.Column="5" x:Name="SearchTextBox" TextChanged="SearchTextBox_TextChanged"
+                     Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444"
+                     Padding="5,3"/>
+
+            <Button Grid.Column="6" x:Name="ClearFiltersButton" Content="Clear Filters" Click="ClearFiltersButton_Click"
+                    Background="Transparent" Foreground="#3498db" BorderThickness="0" 
+                    Padding="10,5" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Log Data Grid -->
+        <DataGrid Grid.Row="2" x:Name="LogDataGrid" Margin="20,0,20,20" AutoGenerateColumns="False"
+                  Background="#1E1E1E" BorderThickness="1" BorderBrush="#333333"
+                  RowBackground="#1E1E1E" AlternatingRowBackground="#252525"
+                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                  CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+                  SelectionMode="Single" SelectionChanged="LogDataGrid_SelectionChanged"
+                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <DataGrid.Resources>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#252525"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </Style>
+            </DataGrid.Resources>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="170">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#BBBBBB"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTemplateColumn Header="Severity" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#2ecc71"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                <Setter Property="Background" Value="#f39c12"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                <Setter Property="Background" Value="#e74c3c"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="Critical">
+                                                <Setter Property="Background" Value="#9b59b6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding Level}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="150">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="TextWrapping" Value="Wrap"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+
+            <!-- Empty Panel shown when no logs match the filter criteria -->
+            <DataGrid.Template>
+                <ControlTemplate TargetType="DataGrid">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <ContentPresenter Content="{TemplateBinding Content}"/>
+                            <TextBlock x:Name="EmptyTextBlock" 
+                                       Text="No logs match the current filter criteria. Try adjusting your filters or click 'Clear Filters'." 
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                       Foreground="#AAAAAA" TextWrapping="Wrap" 
+                                       Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Items.Count, RelativeSource={RelativeSource Self}}" Value="0">
+                            <Setter TargetName="EmptyTextBlock" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </DataGrid.Template>
+        </DataGrid>
+    </Grid>
 </Page>

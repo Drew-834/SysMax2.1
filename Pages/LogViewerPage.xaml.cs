@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.IO;
-using System.Text;
-using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using Microsoft.Win32;
-using System.Threading.Tasks;
 using SysMax2._1.Services;
 using SysMax2._1.Models;
 
@@ -16,285 +18,274 @@ namespace SysMax2._1.Pages
     /// </summary>
     public partial class LogViewerPage : Page
     {
-        private MainWindow mainWindow;
-        private LoggingService loggingService = LoggingService.Instance;
-        private string currentLogText = "";
+        private readonly LoggingService _loggingService;
+        private readonly SystemEventLogService _systemEventLogService;
+        private ObservableCollection<LogEntry> _logs;
+        private ICollectionView _logsView;
+        private LogEntry? _selectedLog;
+        private MainWindow? mainWindow;
 
         public LogViewerPage()
         {
             InitializeComponent();
 
-            // Get reference to main window for assistant interactions
+            // Get services
+            _loggingService = LoggingService.Instance;
+            _systemEventLogService = new SystemEventLogService();
+
+            // Find main window
             mainWindow = Window.GetWindow(this) as MainWindow;
 
-            // Load logs on page load
+            // Initialize collections
+            _logs = new ObservableCollection<LogEntry>();
+            LogDataGrid.ItemsSource = _logs;
+
+            // Get collection view for filtering
+            _logsView = CollectionViewSource.GetDefaultView(_logs);
+            _logsView.Filter = LogFilter;
+
+            // Load logs
             LoadLogs();
 
-            // Show the assistant with helpful information
-            if (mainWindow != null)
-            {
-                mainWindow.ShowAssistantMessage("This page shows system logs that can help diagnose issues. You can filter logs by type, search for specific text, or export logs to share with IT support.");
-            }
+            // Log page navigation
+            _loggingService.Log(LogLevel.Info, "Navigated to Log Viewer page");
         }
 
-        private async void LoadLogs()
+        private void LoadLogs()
         {
             try
             {
-                // Get logs based on selected time range
-                string logs = "";
-                if (TimeRangeComboBox.SelectedIndex == 0) // Recent logs
+                // Show loading status
+                if (mainWindow != null)
                 {
-                    logs = loggingService.GetRecentLogs();
-                }
-                else
-                {
-                    logs = await loggingService.GetAllLogs();
-
-                    // Apply time filter if not "All logs"
-                    if (TimeRangeComboBox.SelectedIndex < 4)
-                    {
-                        logs = FilterLogsByTime(logs);
-                    }
+                    mainWindow.UpdateStatus("Loading logs...");
                 }
 
-                // Apply level filters
-                logs = FilterLogsByLevel(logs);
+                _logs.Clear();
 
-                // Apply search filter if any
-                if (!string.IsNullOrEmpty(SearchBox.Text) && SearchBox.Text != "Search logs...")
+                // Load application logs
+                var appLogs = _loggingService.GetLogEntries();
+                foreach (var log in appLogs)
                 {
-                    logs = FilterLogsBySearch(logs, SearchBox.Text);
+                    _logs.Add(log);
                 }
 
-                // Store the current filtered logs
-                currentLogText = logs;
+                // Load system event logs
+                var systemLogs = _systemEventLogService.GetRecentSystemEvents(100);
+                foreach (var log in systemLogs)
+                {
+                    _logs.Add(log);
+                }
 
-                // Update the text box
-                LogTextBox.Text = currentLogText;
+                // Sort by timestamp descending (newest first)
+                _logsView.SortDescriptions.Clear();
+                _logsView.SortDescriptions.Add(new SortDescription("Timestamp", ListSortDirection.Descending));
 
-                // Scroll to the end
-                LogTextBox.ScrollToEnd();
+                // Update status
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateStatus($"Loaded {_logs.Count} logs");
+                }
             }
             catch (Exception ex)
             {
-                LogTextBox.Text = $"Error loading logs: {ex.Message}";
+                _loggingService.Log(LogLevel.Error, $"Error loading logs: {ex.Message}");
+
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateStatus("Error loading logs");
+                    mainWindow.ShowAssistantMessage($"There was a problem loading the system logs: {ex.Message}");
+                }
             }
         }
 
-        private string FilterLogsByTime(string logs)
+        private bool LogFilter(object item)
         {
-            StringBuilder filteredLogs = new StringBuilder();
-            string[] logLines = logs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            if (item is not LogEntry log)
+                return false;
 
-            DateTime startDate = DateTime.Now.Date;
-
-            switch (TimeRangeComboBox.SelectedIndex)
+            // Filter by log type
+            if (LogTypeFilter.SelectedIndex > 0)
             {
-                case 1: // Today
-                    startDate = DateTime.Now.Date;
-                    break;
-                case 2: // Yesterday
-                    startDate = DateTime.Now.Date.AddDays(-1);
-                    break;
-                case 3: // Last 7 days
-                    startDate = DateTime.Now.Date.AddDays(-7);
-                    break;
-            }
+                string selectedLogType = ((ComboBoxItem)LogTypeFilter.SelectedItem).Content.ToString() ?? "";
 
-            foreach (string line in logLines)
-            {
-                try
+                switch (selectedLogType)
                 {
-                    // Extract date from log line [YYYY-MM-DD HH:mm:ss]
-                    int dateStartIndex = line.IndexOf('[') + 1;
-                    int dateEndIndex = line.IndexOf(']', dateStartIndex);
-                    if (dateStartIndex > 0 && dateEndIndex > dateStartIndex)
-                    {
-                        string dateStr = line.Substring(dateStartIndex, dateEndIndex - dateStartIndex);
-                        if (DateTime.TryParse(dateStr, out DateTime logDate))
-                        {
-                            if (TimeRangeComboBox.SelectedIndex == 2) // Yesterday
-                            {
-                                if (logDate.Date == startDate)
-                                {
-                                    filteredLogs.AppendLine(line);
-                                }
-                            }
-                            else
-                            {
-                                if (logDate.Date >= startDate)
-                                {
-                                    filteredLogs.AppendLine(line);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    // If parsing fails, include the line anyway
-                    filteredLogs.AppendLine(line);
+                    case "System Events":
+                        if (log.Source != "System" && log.Source != "Windows" && !log.Source.Contains("Event"))
+                            return false;
+                        break;
+                    case "Application Logs":
+                        if (log.Source != "SysMax" && log.Source != "Application")
+                            return false;
+                        break;
+                    case "Security Logs":
+                        if (!log.Source.Contains("Security") && !log.Source.Contains("Audit"))
+                            return false;
+                        break;
+                    case "Hardware Logs":
+                        if (!log.Source.Contains("Hardware") && !log.Source.Contains("Device"))
+                            return false;
+                        break;
                 }
             }
 
-            return filteredLogs.ToString();
+            // Filter by severity
+            if (SeverityFilter.SelectedIndex > 0)
+            {
+                string selectedSeverity = ((ComboBoxItem)SeverityFilter.SelectedItem).Content.ToString() ?? "";
+
+                if (!log.Level.ToString().Equals(selectedSeverity, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // Filter by search text
+            if (!string.IsNullOrWhiteSpace(SearchTextBox.Text))
+            {
+                string searchText = SearchTextBox.Text.ToLower();
+
+                return log.Message.ToLower().Contains(searchText) ||
+                       log.Source.ToLower().Contains(searchText);
+            }
+
+            return true;
         }
 
-        private string FilterLogsByLevel(string logs)
+        private void Filter_Changed(object sender, SelectionChangedEventArgs e)
         {
-            StringBuilder filteredLogs = new StringBuilder();
-            string[] logLines = logs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-
-            bool showInfo = InfoFilter.IsChecked ?? true;
-            bool showWarning = WarningFilter.IsChecked ?? true;
-            bool showError = ErrorFilter.IsChecked ?? true;
-            bool showCritical = CriticalFilter.IsChecked ?? true;
-
-            foreach (string line in logLines)
-            {
-                if (showInfo && line.Contains("[Info]"))
-                {
-                    filteredLogs.AppendLine(line);
-                }
-                else if (showWarning && line.Contains("[Warning]"))
-                {
-                    filteredLogs.AppendLine(line);
-                }
-                else if (showError && line.Contains("[Error]"))
-                {
-                    filteredLogs.AppendLine(line);
-                }
-                else if (showCritical && line.Contains("[Critical]"))
-                {
-                    filteredLogs.AppendLine(line);
-                }
-            }
-
-            return filteredLogs.ToString();
+            ApplyFilters();
         }
 
-        private string FilterLogsBySearch(string logs, string searchText)
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            StringBuilder filteredLogs = new StringBuilder();
-            string[] logLines = logs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            ApplyFilters();
+        }
 
-            foreach (string line in logLines)
+        private void ApplyFilters()
+        {
+            _logsView.Refresh();
+
+            int filteredCount = _logsView.Cast<object>().Count();
+            if (mainWindow != null)
             {
-                if (line.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                {
-                    filteredLogs.AppendLine(line);
-                }
+                mainWindow.UpdateStatus($"Showing {filteredCount} of {_logs.Count} logs");
             }
+        }
 
-            return filteredLogs.ToString();
+        private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTypeFilter.SelectedIndex = 0;
+            SeverityFilter.SelectedIndex = 0;
+            SearchTextBox.Clear();
+
+            ApplyFilters();
         }
 
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             LoadLogs();
+            ApplyFilters();
 
             // Log the action
-            loggingService.Log(LogLevel.Info, "User refreshed log view");
+            _loggingService.Log(LogLevel.Info, "User refreshed logs in the Log Viewer");
         }
 
-        private async void ExportButton_Click(object sender, RoutedEventArgs e)
+        private void LogDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LogDataGrid.SelectedItem is LogEntry selectedLog)
+            {
+                _selectedLog = selectedLog;
+
+                // Show log details in the status bar
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateStatus($"Selected log: {selectedLog.Timestamp} - {selectedLog.Source}");
+                }
+            }
+        }
+
+        private void ExportButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                // Create save file dialog
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-                    DefaultExt = "txt",
-                    FileName = $"SysMax_Logs_Export_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt"
+                    Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                    DefaultExt = ".csv",
+                    Title = "Export Logs"
                 };
 
+                // Show save file dialog
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Export either the current filtered view or all logs
-                    string logsToExport = LogTextBox.Text;
+                    // Get the current filtered logs
+                    var filteredLogs = _logsView.Cast<LogEntry>().ToList();
 
-                    if (string.IsNullOrWhiteSpace(logsToExport))
+                    // Export logs to file
+                    ExportLogs(filteredLogs, saveFileDialog.FileName);
+
+                    // Show success message
+                    if (mainWindow != null)
                     {
-                        logsToExport = await loggingService.GetAllLogs();
+                        mainWindow.UpdateStatus($"Exported {filteredLogs.Count} logs to {Path.GetFileName(saveFileDialog.FileName)}");
+                        mainWindow.ShowAssistantMessage($"Successfully exported {filteredLogs.Count} logs to {Path.GetFileName(saveFileDialog.FileName)}");
                     }
 
-                    await File.WriteAllTextAsync(saveFileDialog.FileName, logsToExport);
-
-                    // Log the export action
-                    loggingService.Log(LogLevel.Info, $"Logs exported to {saveFileDialog.FileName}");
-
-                    MessageBox.Show("Logs exported successfully!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                loggingService.Log(LogLevel.Error, $"Error exporting logs: {ex.Message}");
-                MessageBox.Show($"Error exporting logs: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void Filter_Changed(object sender, RoutedEventArgs e)
-        {
-            LoadLogs();
-        }
-
-        private void TimeRangeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            LoadLogs();
-        }
-
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (SearchBox.Text != "Search logs...")
-            {
-                LoadLogs();
-            }
-        }
-
-        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (SearchBox.Text == "Search logs...")
-            {
-                SearchBox.Text = string.Empty;
-            }
-        }
-
-        private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(SearchBox.Text))
-            {
-                SearchBox.Text = "Search logs...";
-            }
-        }
-
-        private void CopyButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(LogTextBox.Text))
-                {
-                    Clipboard.SetText(LogTextBox.Text);
-
                     // Log the action
-                    loggingService.Log(LogLevel.Info, "User copied logs to clipboard");
-
-                    MessageBox.Show("Logs copied to clipboard!", "Copy Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _loggingService.Log(LogLevel.Info, $"User exported {filteredLogs.Count} logs to {saveFileDialog.FileName}");
                 }
             }
             catch (Exception ex)
             {
-                loggingService.Log(LogLevel.Error, $"Error copying to clipboard: {ex.Message}");
-                MessageBox.Show($"Error copying to clipboard: {ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _loggingService.Log(LogLevel.Error, $"Error exporting logs: {ex.Message}");
+
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateStatus("Error exporting logs");
+                    mainWindow.ShowAssistantMessage($"There was a problem exporting the logs: {ex.Message}");
+                }
             }
         }
 
-        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        private void ExportLogs(List<LogEntry> logs, string filePath)
         {
-            LogTextBox.Clear();
+            // Determine export format based on file extension
+            string extension = Path.GetExtension(filePath).ToLower();
 
-            // Log the action
-            loggingService.Log(LogLevel.Info, "User cleared log display");
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                // Write header
+                if (extension == ".csv")
+                {
+                    writer.WriteLine("Timestamp,Level,Source,Message");
+                }
+                else
+                {
+                    writer.WriteLine("Timestamp\tLevel\tSource\tMessage");
+                }
+
+                // Write log entries
+                foreach (var log in logs)
+                {
+                    if (extension == ".csv")
+                    {
+                        // CSV format with proper escaping
+                        writer.WriteLine($"{log.Timestamp:yyyy-MM-dd HH:mm:ss},\"{log.Level}\",\"{EscapeCsvField(log.Source)}\",\"{EscapeCsvField(log.Message)}\"");
+                    }
+                    else
+                    {
+                        // Tab-delimited text format
+                        writer.WriteLine($"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\t{log.Level}\t{log.Source}\t{log.Message}");
+                    }
+                }
+            }
+        }
+
+        private string EscapeCsvField(string field)
+        {
+            // Replace double quotes with two double quotes to escape them in CSV
+            return field.Replace("\"", "\"\"");
         }
     }
 }

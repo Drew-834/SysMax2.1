@@ -5,375 +5,430 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SysMax2._1.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="650" d:DesignWidth="1000"
+      d:DesignHeight="720" d:DesignWidth="1020"
       Title="Application Settings">
 
-    <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="10"/>
-        </Style>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-        </Style>
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="20,20,20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <Style x:Key="SettingsGroupStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#BBBBBB"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,15,0,10"/>
-        </Style>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Application Settings" FontSize="24" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock Text="Configure SysMax to suit your preferences" 
+                           Foreground="#AAAAAA" Margin="0,5,0,0"/>
+            </StackPanel>
 
-        <Style x:Key="SettingLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style x:Key="SettingDescriptionStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,5,0,0"/>
-        </Style>
-
-        <Style x:Key="SwitchControlStyle" TargetType="CheckBox">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <Grid>
-                            <Border x:Name="BackgroundBorder" Width="40" Height="20" 
-                                    Background="#555555" CornerRadius="10">
-                                <Ellipse x:Name="SwitchButton" Width="16" Height="16" 
-                                         Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0"/>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="#3498db"/>
-                                <Setter TargetName="SwitchButton" Property="HorizontalAlignment" Value="Right"/>
-                                <Setter TargetName="SwitchButton" Property="Margin" Value="0,0,2,0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SaveButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1f6aa5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <!-- Header -->
-            <Grid Grid.Row="0">
-                <TextBlock Text="Application Settings" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
-                <Button x:Name="SaveSettingsButton" Content="Save Settings" Style="{StaticResource SaveButtonStyle}" 
-                        HorizontalAlignment="Right" Click="SaveSettingsButton_Click"/>
-            </Grid>
-
-            <!-- General Settings -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="General Settings" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <StackPanel Grid.Row="1">
-                        <!-- Setting Item: Startup -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Start with Windows" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Automatically launch SysMax when you log into Windows" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="StartWithWindowsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Updates -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Check for updates automatically" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Periodically check for new versions of SysMax" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="AutoUpdateCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Visualization -->
-                        <TextBlock Text="VISUALIZATION" Style="{StaticResource SettingsGroupStyle}"/>
-
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0" Text="Refresh interval" Style="{StaticResource SettingLabelStyle}"/>
-
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <RadioButton x:Name="RefreshSlowOption" Content="Slow (5s)" Margin="0,0,10,0" 
-                                             Foreground="#BBBBBB" GroupName="RefreshRate"/>
-                                <RadioButton x:Name="RefreshMediumOption" Content="Medium (2s)" Margin="0,0,10,0" 
-                                             Foreground="#BBBBBB" GroupName="RefreshRate" IsChecked="True"/>
-                                <RadioButton x:Name="RefreshFastOption" Content="Fast (1s)" 
-                                             Foreground="#BBBBBB" GroupName="RefreshRate"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Use animations" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Enable smooth transitions and animations in the user interface" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="UseAnimationsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Notifications Settings -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Notifications" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <StackPanel Grid.Row="1">
-                        <!-- Setting Item: System Alerts -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="System alerts" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Receive notifications about critical system events" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="SystemAlertsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Performance Warnings -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Performance warnings" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Notify when CPU, memory, or disk usage exceeds threshold" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="PerformanceWarningsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Updates Notifications -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Updates available" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Notify when Windows updates or driver updates are available" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="UpdatesNotificationsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Alert Thresholds -->
-                        <TextBlock Text="ALERT THRESHOLDS" Style="{StaticResource SettingsGroupStyle}"/>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- CPU -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="CPU Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
-                            <Slider Grid.Row="0" Grid.Column="1" Minimum="50" Maximum="100" Value="80" 
-                                    x:Name="CpuThresholdSlider" VerticalAlignment="Center"
-                                    Background="#444444" Foreground="#3498db"/>
-
-                            <!-- Memory -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Memory Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
-                            <Slider Grid.Row="1" Grid.Column="1" Minimum="50" Maximum="100" Value="85" 
-                                    x:Name="MemoryThresholdSlider" VerticalAlignment="Center"
-                                    Background="#444444" Foreground="#3498db"/>
-
-                            <!-- Disk -->
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Disk Usage:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
-                            <Slider Grid.Row="2" Grid.Column="1" Minimum="50" Maximum="100" Value="90" 
-                                    x:Name="DiskThresholdSlider" VerticalAlignment="Center"
-                                    Background="#444444" Foreground="#3498db"/>
-
-                            <!-- Disk Space -->
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Low Disk Space:" Margin="0,10,15,10" Foreground="#BBBBBB"/>
-                            <Slider Grid.Row="3" Grid.Column="1" Minimum="5" Maximum="25" Value="15" 
-                                    x:Name="DiskSpaceThresholdSlider" VerticalAlignment="Center"
-                                    Background="#444444" Foreground="#3498db"/>
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Privacy Settings -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Privacy &amp; Data" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <StackPanel Grid.Row="1">
-                        <!-- Setting Item: Data Collection -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Anonymous usage data" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Help improve SysMax by sending anonymous usage statistics" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="UsageDataCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Setting Item: Crash Reports -->
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Automatic crash reports" Style="{StaticResource SettingLabelStyle}"/>
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Send diagnostic information when the application crashes" 
-                                       Style="{StaticResource SettingDescriptionStyle}"/>
-                            <CheckBox x:Name="CrashReportsCheck" Grid.Column="1" Grid.RowSpan="2" 
-                                      Style="{StaticResource SwitchControlStyle}" IsChecked="True"/>
-                        </Grid>
-
-                        <!-- Privacy Notice -->
-                        <Border Background="#2a2a2a" Padding="15" CornerRadius="4" Margin="0,10,0,0">
-                            <TextBlock TextWrapping="Wrap" Foreground="#AAAAAA" FontSize="12">
-                                Your privacy is important to us. SysMax only collects data that helps improve the application
-                                and does not gather personal information. All data is anonymized before transmission.
-                                <LineBreak/><LineBreak/>
-                                For more details, see our full <Hyperlink Foreground="#3498db" 
-                                    NavigateUri="https://example.com/privacy" 
-                                    RequestNavigate="Hyperlink_RequestNavigate">Privacy Policy</Hyperlink>.
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-                </Grid>
-            </Border>
+            <Button x:Name="SaveSettingsButton" Grid.Column="1" Content="Save Settings" Click="SaveSettingsButton_Click"
+                    Background="#3498db" Foreground="White" BorderThickness="0" 
+                    Padding="15,8"/>
         </Grid>
-    </ScrollViewer>
+
+        <!-- Settings Content -->
+        <ScrollViewer Grid.Row="1" Margin="20,0,20,20" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- General Settings -->
+                <Border Grid.Row="0" Grid.Column="0" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="0,0,10,15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="General Settings" FontSize="18" FontWeight="SemiBold" 
+                                   Foreground="White" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <!-- Start with Windows -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Start with Windows" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Automatically start SysMax when Windows starts" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="StartWithWindowsCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+
+                            <!-- Run in Background -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Run in Background" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Keep SysMax running in the background when closed" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="RunInBackgroundCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+
+                            <!-- Default User Mode -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Default User Mode" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Choose the default mode when SysMax starts" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <ComboBox x:Name="DefaultUserModeComboBox" Grid.Column="1" Width="120"
+                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                    <ComboBoxItem Content="Basic" IsSelected="True"/>
+                                    <ComboBoxItem Content="Pro"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Language -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Language" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Select the application display language" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <ComboBox x:Name="LanguageComboBox" Grid.Column="1" Width="120"
+                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                    <ComboBoxItem Content="English" IsSelected="True"/>
+                                    <ComboBoxItem Content="Spanish"/>
+                                    <ComboBoxItem Content="French"/>
+                                    <ComboBoxItem Content="German"/>
+                                    <ComboBoxItem Content="Japanese"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Theme -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Theme" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Choose the application theme" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <ComboBox x:Name="ThemeComboBox" Grid.Column="1" Width="120"
+                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                    <ComboBoxItem Content="Dark" IsSelected="True"/>
+                                    <ComboBoxItem Content="Light"/>
+                                    <ComboBoxItem Content="System"/>
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Notification Settings -->
+                <Border Grid.Row="0" Grid.Column="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="10,0,0,15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Notifications" FontSize="18" FontWeight="SemiBold" 
+                                   Foreground="White" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <!-- Enable Notifications -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Enable Notifications" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Show notifications for system events and issues" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="EnableNotificationsCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+
+                            <!-- Critical Issues Only -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Critical Issues Only" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Only notify for critical issues" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="CriticalIssuesOnlyCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="False"/>
+                            </Grid>
+
+                            <!-- Notification Sound -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Notification Sound" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Play sound with notifications" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="NotificationSoundCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Monitoring Settings -->
+                <Border Grid.Row="1" Grid.Column="0" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="0,0,10,15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Monitoring Settings" FontSize="18" FontWeight="SemiBold" 
+                                   Foreground="White" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <!-- Update Frequency -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Update Frequency" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="How often to update system metrics" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <ComboBox x:Name="UpdateFrequencyComboBox" Grid.Column="1" Width="120"
+                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                    <ComboBoxItem Content="1 second"/>
+                                    <ComboBoxItem Content="2 seconds" IsSelected="True"/>
+                                    <ComboBoxItem Content="5 seconds"/>
+                                    <ComboBoxItem Content="10 seconds"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- CPU Usage Threshold -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="CPU Alert Threshold" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Alert when CPU usage exceeds this percentage" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Slider x:Name="CpuThresholdSlider" Width="100" Minimum="50" Maximum="100" 
+                                            Value="80" TickFrequency="5" IsSnapToTickEnabled="True"
+                                            VerticalAlignment="Center" ValueChanged="ThresholdSlider_ValueChanged"/>
+                                    <TextBlock x:Name="CpuThresholdText" Text="80%" Foreground="White" 
+                                               VerticalAlignment="Center" Margin="10,0,0,0" Width="40"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Memory Usage Threshold -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Memory Alert Threshold" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Alert when memory usage exceeds this percentage" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Slider x:Name="MemoryThresholdSlider" Width="100" Minimum="50" Maximum="100" 
+                                            Value="85" TickFrequency="5" IsSnapToTickEnabled="True"
+                                            VerticalAlignment="Center" ValueChanged="ThresholdSlider_ValueChanged"/>
+                                    <TextBlock x:Name="MemoryThresholdText" Text="85%" Foreground="White" 
+                                               VerticalAlignment="Center" Margin="10,0,0,0" Width="40"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Disk Usage Threshold -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Disk Alert Threshold" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Alert when disk usage exceeds this percentage" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Slider x:Name="DiskThresholdSlider" Width="100" Minimum="50" Maximum="100" 
+                                            Value="90" TickFrequency="5" IsSnapToTickEnabled="True"
+                                            VerticalAlignment="Center" ValueChanged="ThresholdSlider_ValueChanged"/>
+                                    <TextBlock x:Name="DiskThresholdText" Text="90%" Foreground="White" 
+                                               VerticalAlignment="Center" Margin="10,0,0,0" Width="40"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Advanced Settings -->
+                <Border Grid.Row="1" Grid.Column="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="10,0,0,15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Advanced Settings" FontSize="18" FontWeight="SemiBold" 
+                                   Foreground="White" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <!-- Enable Logging -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Enable Logging" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Write application logs to disk" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="EnableLoggingCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+
+                            <!-- Automatic Updates -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Automatic Updates" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Check for and install updates automatically" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="AutoUpdateCheckbox" Grid.Column="1" VerticalAlignment="Center"
+                                          IsChecked="True"/>
+                            </Grid>
+
+                            <!-- Clear Data -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Clear Application Data" Foreground="White" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Reset all settings and clear stored data" 
+                                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <Button x:Name="ClearDataButton" Grid.Column="1" Content="Clear Data" Click="ClearDataButton_Click"
+                                        Background="#e74c3c" Foreground="White" BorderThickness="0" 
+                                        Padding="8,4"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- About SysMax -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="0,0,0,15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="SysMax" FontSize="24" FontWeight="Bold" Foreground="#3498db"/>
+
+                        <StackPanel Grid.Column="1" Margin="15,0">
+                            <TextBlock Text="System Health Monitor" FontSize="16" Foreground="White"/>
+                            <TextBlock Text="Version 2.1.0" Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                            <TextBlock x:Name="CopyrightText" Text="© 2025 SysMax Inc. All rights reserved." Foreground="#AAAAAA" Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Button x:Name="CheckUpdatesButton" Content="Check for Updates" Click="CheckUpdatesButton_Click"
+                                    Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                                    Padding="10,5" Margin="0,0,10,0"/>
+
+                            <Button x:Name="AboutButton" Content="About" Click="AboutButton_Click"
+                                    Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                                    Padding="10,5"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </Page>

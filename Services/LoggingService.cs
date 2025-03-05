@@ -1,44 +1,48 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using SysMax2._1.Models;
 
 namespace SysMax2._1.Services
 {
-    public enum LogLevel
-    {
-        Info,
-        Warning,
-        Error,
-        Critical
-    }
-
     /// <summary>
-    /// Service that handles logging of system events and actions in a user-friendly format
+    /// Service for logging application events and errors
     /// </summary>
     public class LoggingService
     {
         private static LoggingService? _instance;
+        private readonly SemaphoreSlim _logLock = new SemaphoreSlim(1, 1);
+        private readonly List<LogEntry> _logEntries = new List<LogEntry>();
         private readonly string _logFilePath;
-        private readonly object _lockObj = new object();
-        private StringBuilder _recentLogs = new StringBuilder();
+        private const int MaxInMemoryLogs = 1000;
+        private bool _logToFile = true;
 
-        // Maximum number of recent logs to keep in memory
-        private const int MaxRecentLogs = 100;
-        private int _recentLogCount = 0;
+        // Event for when a new log entry is added
+        public event EventHandler<LogEntry>? LogAdded;
 
+        /// <summary>
+        /// Creates a new instance of the LoggingService
+        /// </summary>
         private LoggingService()
         {
             // Create logs directory if it doesn't exist
-            string logsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-            Directory.CreateDirectory(logsDirectory);
+            string appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SysMax");
 
-            // Create a log file with current date in name
-            string fileName = $"SysMax_Log_{DateTime.Now:yyyy-MM-dd}.txt";
-            _logFilePath = Path.Combine(logsDirectory, fileName);
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory(appDataPath);
+            }
 
-            // Log application start
-            Log(LogLevel.Info, "Application started");
+            // Set log file path
+            _logFilePath = Path.Combine(appDataPath, "SysMax.log");
+
+            // Log service initialization
+            Log(LogLevel.Info, "Logging service initialized");
         }
 
         /// <summary>
@@ -57,158 +61,130 @@ namespace SysMax2._1.Services
         }
 
         /// <summary>
-        /// Logs a message with the specified log level
+        /// Logs a message with the specified level
         /// </summary>
-        /// <param name="level">The severity level of the log</param>
-        /// <param name="message">The message to log</param>
-        public void Log(LogLevel level, string message)
+        /// <param name="level">Log level</param>
+        /// <param name="message">Log message</param>
+        /// <param name="source">Log source</param>
+        public void Log(LogLevel level, string message, string source = "SysMax")
         {
-            string formattedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{level}] {message}";
+            LogEntry entry = new LogEntry(level, message, source);
 
-            // Add to recent logs in memory
-            lock (_lockObj)
+            Task.Run(() => AddLogEntryAsync(entry));
+        }
+
+        /// <summary>
+        /// Adds a log entry asynchronously
+        /// </summary>
+        /// <param name="entry">Log entry to add</param>
+        private async Task AddLogEntryAsync(LogEntry entry)
+        {
+            await _logLock.WaitAsync();
+
+            try
             {
-                _recentLogs.AppendLine(formattedMessage);
-                _recentLogCount++;
+                // Add to in-memory collection
+                _logEntries.Add(entry);
 
-                // If we've exceeded the maximum number of logs, trim the oldest ones
-                if (_recentLogCount > MaxRecentLogs)
+                // Trim collection if it exceeds the maximum size
+                if (_logEntries.Count > MaxInMemoryLogs)
                 {
-                    // Find the position after the first newline
-                    int pos = _recentLogs.ToString().IndexOf(Environment.NewLine);
-                    if (pos >= 0)
-                    {
-                        _recentLogs.Remove(0, pos + Environment.NewLine.Length);
-                        _recentLogCount--;
-                    }
+                    _logEntries.RemoveRange(0, _logEntries.Count - MaxInMemoryLogs);
+                }
+
+                // Write to log file
+                if (_logToFile)
+                {
+                    await WriteToFileAsync(entry);
+                }
+
+                // Raise event
+                LogAdded?.Invoke(this, entry);
+            }
+            finally
+            {
+                _logLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Writes a log entry to the log file
+        /// </summary>
+        /// <param name="entry">Log entry to write</param>
+        private async Task WriteToFileAsync(LogEntry entry)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(_logFilePath, true))
+                {
+                    await writer.WriteLineAsync(entry.ToString());
                 }
             }
-
-            // Write to file
-            try
+            catch
             {
-                lock (_lockObj)
-                {
-                    File.AppendAllText(_logFilePath, formattedMessage + Environment.NewLine);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error writing to log file: {ex.Message}");
+                // Silently fail if we can't write to the log file
+                // We don't want logging failures to crash the application
             }
         }
 
         /// <summary>
-        /// Logs a message asynchronously
+        /// Gets all log entries
         /// </summary>
-        /// <param name="level">The severity level of the log</param>
-        /// <param name="message">The message to log</param>
-        public async Task LogAsync(LogLevel level, string message)
+        /// <returns>Collection of log entries</returns>
+        public List<LogEntry> GetLogEntries()
         {
-            string formattedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{level}] {message}";
-
-            // Add to recent logs in memory
-            lock (_lockObj)
+            lock (_logEntries)
             {
-                _recentLogs.AppendLine(formattedMessage);
-                _recentLogCount++;
-
-                // If we've exceeded the maximum number of logs, trim the oldest ones
-                if (_recentLogCount > MaxRecentLogs)
-                {
-                    // Find the position after the first newline
-                    int pos = _recentLogs.ToString().IndexOf(Environment.NewLine);
-                    if (pos >= 0)
-                    {
-                        _recentLogs.Remove(0, pos + Environment.NewLine.Length);
-                        _recentLogCount--;
-                    }
-                }
-            }
-
-            // Write to file asynchronously
-            try
-            {
-                await File.AppendAllTextAsync(_logFilePath, formattedMessage + Environment.NewLine);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error writing to log file: {ex.Message}");
+                return new List<LogEntry>(_logEntries);
             }
         }
 
         /// <summary>
-        /// Gets the most recent logs that are stored in memory
+        /// Gets log entries filtered by level
         /// </summary>
-        /// <returns>A string containing the recent logs</returns>
-        public string GetRecentLogs()
+        /// <param name="level">Log level to filter by</param>
+        /// <returns>Collection of filtered log entries</returns>
+        public List<LogEntry> GetLogEntries(LogLevel level)
         {
-            lock (_lockObj)
+            lock (_logEntries)
             {
-                return _recentLogs.ToString();
+                return _logEntries.FindAll(e => e.Level == level);
             }
         }
 
         /// <summary>
-        /// Gets all logs from the current log file
+        /// Gets log entries from a specific source
         /// </summary>
-        /// <returns>A string containing all logs</returns>
-        public async Task<string> GetAllLogs()
+        /// <param name="source">Source to filter by</param>
+        /// <returns>Collection of filtered log entries</returns>
+        public List<LogEntry> GetLogEntriesFromSource(string source)
         {
-            try
+            lock (_logEntries)
             {
-                return await File.ReadAllTextAsync(_logFilePath);
-            }
-            catch (Exception ex)
-            {
-                return $"Error reading log file: {ex.Message}";
+                return _logEntries.FindAll(e => e.Source == source);
             }
         }
 
         /// <summary>
-        /// Clears the in-memory recent logs
+        /// Clears all in-memory log entries
         /// </summary>
-        public void ClearRecentLogs()
+        public void ClearLogs()
         {
-            lock (_lockObj)
+            lock (_logEntries)
             {
-                _recentLogs.Clear();
-                _recentLogCount = 0;
+                _logEntries.Clear();
             }
         }
 
         /// <summary>
-        /// Gets all available log files
+        /// Enables or disables logging to file
         /// </summary>
-        /// <returns>An array of log file names</returns>
-        public string[] GetLogFiles()
+        /// <param name="enabled">Whether logging to file should be enabled</param>
+        public void SetFileLogging(bool enabled)
         {
-            try
-            {
-                string logsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-                return Directory.GetFiles(logsDirectory, "SysMax_Log_*.txt");
-            }
-            catch (Exception)
-            {
-                return Array.Empty<string>();
-            }
-        }
+            _logToFile = enabled;
 
-        /// <summary>
-        /// Gets the logs from a specific file
-        /// </summary>
-        /// <param name="filePath">The full path to the log file</param>
-        /// <returns>A string containing the logs from the file</returns>
-        public async Task<string> GetLogsFromFile(string filePath)
-        {
-            try
-            {
-                return await File.ReadAllTextAsync(filePath);
-            }
-            catch (Exception ex)
-            {
-                return $"Error reading log file: {ex.Message}";
-            }
+            Log(LogLevel.Info, $"File logging {(enabled ? "enabled" : "disabled")}");
         }
     }
 }
