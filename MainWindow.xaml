@@ -94,6 +94,7 @@
                             Padding="15,10" Margin="5,2" HorizontalContentAlignment="Left" Click="Navigation_Click"/>
                     <Button x:Name="NavHelp" Content="Help &amp; Support" Background="Transparent" Foreground="{StaticResource MutedTextColor}" BorderThickness="0" 
                             Padding="15,10" Margin="5,2" HorizontalContentAlignment="Left" Click="Navigation_Click"/>
+                    
                 </StackPanel>
             </Border>
 

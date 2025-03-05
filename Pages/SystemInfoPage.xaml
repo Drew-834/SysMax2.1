@@ -1,0 +1,536 @@
+﻿<Page x:Class="SysMax2._1.Pages.SystemInfoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:SysMax2._1.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="650" d:DesignWidth="1000"
+      Title="System Information">
+
+    <Page.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+
+        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#3498db"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2980b9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1f6aa5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MonitoringButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2ecc71"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#27ae60"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#219653"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PropertyNameStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#BBBBBB"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,5,0,5"/>
+        </Style>
+
+        <Style x:Key="PropertyValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,5,0,5"/>
+        </Style>
+
+        <Style x:Key="HardwareMetricStyle" TargetType="Border">
+            <Setter Property="Background" Value="#2a2a2a"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="TabButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2a2a2a"/>
+            <Setter Property="Foreground" Value="#BBBBBB"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#333333"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SelectedTabButtonStyle" TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
+            <Setter Property="Background" Value="#3498db"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0">
+                <TextBlock Text="System Information" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource ActionButtonStyle}" Click="RefreshButton_Click"/>
+                    <Button x:Name="ExportButton" Content="Export Info" Style="{StaticResource ActionButtonStyle}" Margin="10,5,0,5" Click="ExportButton_Click"/>
+                    <Button x:Name="MonitoringToggleButton" Content="Start Monitoring" Style="{StaticResource MonitoringButtonStyle}" Margin="10,5,0,5" Click="MonitoringToggleButton_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Tab Buttons -->
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="SummaryTab" Content="System Summary" Style="{StaticResource SelectedTabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="CpuTab" Content="CPU" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="MemoryTab" Content="Memory" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="StorageTab" Content="Storage" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="GraphicsTab" Content="Graphics" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="NetworkTab" Content="Network" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                    <Button x:Name="OsTab" Content="Operating System" Style="{StaticResource TabButtonStyle}" Click="TabButton_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Content Area -->
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
+                <Grid>
+                    <!-- System Summary Tab -->
+                    <Grid x:Name="SummaryContent" Visibility="Visible">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="System Summary" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <!-- Left Column -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="HARDWARE OVERVIEW" FontWeight="SemiBold" Foreground="#666666" Margin="0,0,0,10"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Computer Name:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="ComputerNameValue" Grid.Row="0" Grid.Column="1" Text="DESKTOP-XYZ123" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Processor:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="ProcessorValue" Grid.Row="1" Grid.Column="1" Text="Intel Core i7-12700K" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Memory:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="MemoryValue" Grid.Row="2" Grid.Column="1" Text="32 GB DDR4" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Graphics:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="GraphicsValue" Grid.Row="3" Grid.Column="1" Text="NVIDIA GeForce RTX 3080" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Storage:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="StorageValue" Grid.Row="4" Grid.Column="1" Text="1TB NVMe SSD + 2TB HDD" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Motherboard:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="MotherboardValue" Grid.Row="5" Grid.Column="1" Text="ASUS ROG Strix Z690-A" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Network:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="NetworkValue" Grid.Row="6" Grid.Column="1" Text="Intel Wi-Fi 6E AX210" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="BIOS Version:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="BiosValue" Grid.Row="7" Grid.Column="1" Text="1.23.4" Style="{StaticResource PropertyValueStyle}"/>
+                            </Grid>
+
+                            <TextBlock Text="CURRENT STATUS" FontWeight="SemiBold" Foreground="#666666" Margin="0,20,0,10"/>
+
+                            <!-- Live Metrics -->
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="CPU Usage" Foreground="#BBBBBB" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="CpuUsageValue" Text="24" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="%" FontSize="14" Foreground="White" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <ProgressBar Grid.Column="1" Width="100" Height="10" Maximum="100" Value="24" 
+                                                 Foreground="#3498db" Background="#444444" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                 x:Name="CpuUsageBar"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Memory Usage" Foreground="#BBBBBB" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="MemoryUsageValue" Text="36" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="%" FontSize="14" Foreground="White" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <ProgressBar Grid.Column="1" Width="100" Height="10" Maximum="100" Value="36" 
+                                                 Foreground="#2ecc71" Background="#444444" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                 x:Name="MemoryUsageBar"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="CPU Temperature" Foreground="#BBBBBB" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="CpuTempValue" Text="54" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="°C" FontSize="14" Foreground="White" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <ProgressBar Grid.Column="1" Width="100" Height="10" Maximum="100" Value="54" 
+                                                 Foreground="#f39c12" Background="#444444" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                 x:Name="CpuTempBar"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Disk Usage" Foreground="#BBBBBB" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="DiskUsageValue" Text="62" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="%" FontSize="14" Foreground="White" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <ProgressBar Grid.Column="1" Width="100" Height="10" Maximum="100" Value="62" 
+                                                 Foreground="#9b59b6" Background="#444444" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                 x:Name="DiskUsageBar"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Right Column -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                            <TextBlock Text="OPERATING SYSTEM" FontWeight="SemiBold" Foreground="#666666" Margin="0,0,0,10"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="OS Name:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsNameValue" Grid.Row="0" Grid.Column="1" Text="Windows 11 Pro" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsVersionValue" Grid.Row="1" Grid.Column="1" Text="22H2 (21H2)" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Build:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsBuildValue" Grid.Row="2" Grid.Column="1" Text="22000.1936" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Architecture:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsArchValue" Grid.Row="3" Grid.Column="1" Text="64-bit" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Installed On:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsInstalledValue" Grid.Row="4" Grid.Column="1" Text="11/15/2022" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Last Update:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="OsLastUpdateValue" Grid.Row="5" Grid.Column="1" Text="02/15/2023" Style="{StaticResource PropertyValueStyle}"/>
+                            </Grid>
+
+                            <TextBlock Text="UPTIME &amp; USER" FontWeight="SemiBold" Foreground="#666666" Margin="0,20,0,10"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Uptime:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="UptimeValue" Grid.Row="0" Grid.Column="1" Text="3 days, 7 hours, 15 minutes" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Username:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="UsernameValue" Grid.Row="1" Grid.Column="1" Text="John Smith" Style="{StaticResource PropertyValueStyle}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Computer Role:" Style="{StaticResource PropertyNameStyle}"/>
+                                <TextBlock x:Name="ComputerRoleValue" Grid.Row="2" Grid.Column="1" Text="Workstation" Style="{StaticResource PropertyValueStyle}"/>
+                            </Grid>
+
+                            <TextBlock Text="NETWORK STATUS" FontWeight="SemiBold" Foreground="#666666" Margin="0,20,0,10"/>
+
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Download" Foreground="#BBBBBB" FontSize="12"/>
+                                        <TextBlock x:Name="DownloadSpeedValue" Text="2.4 Mbps" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Upload" Foreground="#BBBBBB" FontSize="12"/>
+                                        <TextBlock x:Name="UploadSpeedValue" Text="1.2 Mbps" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource HardwareMetricStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="IP Address:" Style="{StaticResource PropertyNameStyle}"/>
+                                    <TextBlock x:Name="IpAddressValue" Grid.Row="0" Grid.Column="1" Text="192.168.1.100" Style="{StaticResource PropertyValueStyle}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Adapter:" Style="{StaticResource PropertyNameStyle}"/>
+                                    <TextBlock x:Name="NetworkAdapterValue" Grid.Row="1" Grid.Column="1" Text="Wi-Fi" Style="{StaticResource PropertyValueStyle}"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Status:" Style="{StaticResource PropertyNameStyle}"/>
+                                    <TextBlock x:Name="NetworkStatusValue" Grid.Row="2" Grid.Column="1" Text="Connected" Foreground="#2ecc71" FontWeight="SemiBold"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- CPU Tab -->
+                    <Grid x:Name="CpuContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="CPU Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="CpuInfoPanel">
+                                <!-- CPU content will be populated programmatically -->
+                                <TextBlock Text="Loading CPU information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Memory Tab -->
+                    <Grid x:Name="MemoryContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Memory Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="MemoryInfoPanel">
+                                <!-- Memory content will be populated programmatically -->
+                                <TextBlock Text="Loading memory information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Storage Tab -->
+                    <Grid x:Name="StorageContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Storage Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="StorageInfoPanel">
+                                <!-- Storage content will be populated programmatically -->
+                                <TextBlock Text="Loading storage information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Graphics Tab -->
+                    <Grid x:Name="GraphicsContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Graphics Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="GraphicsInfoPanel">
+                                <!-- Graphics content will be populated programmatically -->
+                                <TextBlock Text="Loading graphics information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Network Tab -->
+                    <Grid x:Name="NetworkContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Network Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="NetworkInfoPanel">
+                                <!-- Network content will be populated programmatically -->
+                                <TextBlock Text="Loading network information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- OS Tab -->
+                    <Grid x:Name="OsContent" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Operating System Information" Style="{StaticResource CardHeaderStyle}"/>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="OsInfoPanel">
+                                <!-- OS content will be populated programmatically -->
+                                <TextBlock Text="Loading operating system information..." Foreground="#BBBBBB"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>
