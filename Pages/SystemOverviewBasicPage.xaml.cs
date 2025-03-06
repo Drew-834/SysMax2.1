@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Threading.Tasks;
-using System.Text;
+using System.Windows.Threading;
 using SysMax2._1.Services;
 using SysMax2._1.Models;
 
@@ -16,229 +16,371 @@ namespace SysMax2._1.Pages
     /// </summary>
     public partial class SystemOverviewBasicPage : Page
     {
-        private Random random = new Random();
-        private bool isScanning = false;
-        private MainWindow mainWindow;
-        private LoggingService loggingService = LoggingService.Instance;
-        private List<IssueInfo> currentIssues = new List<IssueInfo>();
+        private readonly LoggingService _loggingService = LoggingService.Instance;
+        private readonly EnhancedHardwareMonitorService _hardwareMonitor;
+        private readonly SystemEventLogService _systemEventLogService;
+        private DispatcherTimer _updateTimer;
+        private MainWindow? mainWindow;
+        private int _healthScore = 85;
+        private List<IssueInfo> _activeIssues = new List<IssueInfo>();
 
         public SystemOverviewBasicPage()
         {
             InitializeComponent();
 
-            // Get reference to main window for assistant interactions
+            // Get services
+            _hardwareMonitor = EnhancedHardwareMonitorService.Instance;
+            _systemEventLogService = new SystemEventLogService();
+
+            // Find main window
             mainWindow = Window.GetWindow(this) as MainWindow;
 
-            // Initialize the current issues
-            InitializeCurrentIssues();
+            // Start hardware monitoring if not already running
+            if (!_hardwareMonitor.IsMonitoring)
+            {
+                _hardwareMonitor.StartMonitoring();
+            }
 
-            // Initialize with simulated data
-            UpdateSystemHealth();
+            // Set up update timer
+            _updateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _updateTimer.Tick += UpdateTimer_Tick;
+            _updateTimer.Start();
 
-            // Log page initialization
-            loggingService.Log(LogLevel.Info, "System Overview (Basic) page initialized");
+            // Subscribe to hardware events
+            SubscribeToHardwareEvents();
 
-            // Show the assistant with helpful information
+            // Initialize UI with current data
+            UpdateUI();
+
+            // Check for issues
+            CheckForIssues();
+
+            // Show assistant message
             if (mainWindow != null)
             {
-                mainWindow.ShowAssistantMessage("Welcome to the System Overview! Here you can see the health of your computer at a glance and perform common maintenance tasks.");
+                mainWindow.UpdateStatus("Ready");
+                mainWindow.ShowAssistantMessage("Welcome to SysMax! This simplified view shows your system health at a glance. Let me know if you need help with anything.");
             }
+
+            // Log page navigation
+            _loggingService.Log(LogLevel.Info, "Navigated to System Overview Basic page");
         }
 
-        private void InitializeCurrentIssues()
+        private void SubscribeToHardwareEvents()
         {
-            // Add predefined issues
-            currentIssues.Add(new IssueInfo
-            {
-                Icon = "⚠️",
-                Text = "Your disk is getting full. This might slow down your computer.",
-                FixButtonText = "Fix Now",
-                FixActionTag = "DiskSpace",
-                IssueSeverity = IssueInfo.Severity.Medium,
-                Timestamp = DateTime.Now
-            });
-
-            currentIssues.Add(new IssueInfo
-            {
-                Icon = "🔒",
-                Text = "Important security updates are available to keep your computer safe.",
-                FixButtonText = "Update Now",
-                FixActionTag = "WindowsUpdate",
-                IssueSeverity = IssueInfo.Severity.High,
-                Timestamp = DateTime.Now
-            });
-
-            // Update the issue count
-            UpdateIssueCount();
+            // Subscribe to hardware monitor events for issue detection
+            _hardwareMonitor.HighCpuUsageDetected += (s, e) => Dispatcher.Invoke(CheckForIssues);
+            _hardwareMonitor.HighMemoryUsageDetected += (s, e) => Dispatcher.Invoke(CheckForIssues);
+            _hardwareMonitor.LowDiskSpaceDetected += (s, e) => Dispatcher.Invoke(CheckForIssues);
+            _hardwareMonitor.NetworkDisconnected += (s, e) => Dispatcher.Invoke(CheckForIssues);
         }
 
-        private void UpdateIssueCount()
+        private void UpdateTimer_Tick(object? sender, EventArgs e)
         {
-            IssueCount.Text = $"{currentIssues.Count} issues found";
+            UpdateUI();
+        }
 
-            // Set text color based on issue count
-            if (currentIssues.Count == 0)
+        private void UpdateUI()
+        {
+            try
             {
-                IssueCount.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
-                NoIssuesMessage.Visibility = Visibility.Visible;
-                CopyAllIssuesButton.IsEnabled = false;
-            }
-            else
-            {
-                // Yellow for 1-2 issues, red for 3+
-                if (currentIssues.Count > 2)
+                // Update hardware metrics from monitor service
+                float cpuUsage = _hardwareMonitor.CpuUsage;
+                float memoryUsage = _hardwareMonitor.MemoryUsage;
+                float diskUsage = _hardwareMonitor.DiskUsage;
+
+                // Update CPU UI
+                CpuProgressBar.Value = cpuUsage;
+                CpuUsageText.Text = $"{cpuUsage:F0}%";
+
+                if (cpuUsage > 90)
                 {
-                    IssueCount.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                    CpuStatusText.Text = "Very high usage";
+                    CpuStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                    CpuProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                }
+                else if (cpuUsage > 70)
+                {
+                    CpuStatusText.Text = "High usage";
+                    CpuStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                    CpuProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
                 }
                 else
                 {
-                    IssueCount.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                    CpuStatusText.Text = "Normal usage";
+                    CpuStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#AAAAAA"));
+                    CpuProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3498db"));
                 }
-                NoIssuesMessage.Visibility = Visibility.Collapsed;
-                CopyAllIssuesButton.IsEnabled = true;
-            }
-        }
 
-        private void UpdateSystemHealth()
-        {
-            // Simulate system health data
-            int diskSpace = random.Next(65, 95); // 65-95% used
-            int memoryUsage = random.Next(30, 70); // 30-70% used
-            bool updatesNeeded = random.Next(0, 2) == 1; // 50% chance
-            int cpuTemp = random.Next(45, 85); // CPU temperature
+                // Update Memory UI
+                MemoryProgressBar.Value = memoryUsage;
+                MemoryUsageText.Text = $"{memoryUsage:F0}%";
 
-            // Determine overall health
-            string healthStatus;
-            SolidColorBrush healthColor;
-
-            if (diskSpace > 90 || cpuTemp > 80 || memoryUsage > 85 || updatesNeeded)
-            {
-                healthStatus = "Needs Attention";
-                healthColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
-                OverallHealthStatus.Text = healthStatus;
-                OverallHealthIndicator.Fill = healthColor;
-
-                // Log health status
-                loggingService.Log(LogLevel.Warning, $"System health: {healthStatus} - Disk: {diskSpace}%, CPU Temp: {cpuTemp}°C, Memory: {memoryUsage}%");
-            }
-            else if (diskSpace > 80 || cpuTemp > 70 || memoryUsage > 70)
-            {
-                healthStatus = "Fair";
-                healthColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
-                OverallHealthStatus.Text = healthStatus;
-                OverallHealthIndicator.Fill = healthColor;
-
-                // Log health status
-                loggingService.Log(LogLevel.Info, $"System health: {healthStatus} - Disk: {diskSpace}%, CPU Temp: {cpuTemp}°C, Memory: {memoryUsage}%");
-            }
-            else
-            {
-                healthStatus = "Good";
-                healthColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
-                OverallHealthStatus.Text = healthStatus;
-                OverallHealthIndicator.Fill = healthColor;
-
-                // Log health status
-                loggingService.Log(LogLevel.Info, $"System health: {healthStatus} - Disk: {diskSpace}%, CPU Temp: {cpuTemp}°C, Memory: {memoryUsage}%");
-            }
-
-            // Determine action needed text
-            if (diskSpace > 85)
-            {
-                ActionNeededText.Text = "You should clean your disk soon";
-            }
-            else if (updatesNeeded)
-            {
-                ActionNeededText.Text = "Install available Windows updates";
-            }
-            else if (cpuTemp > 75)
-            {
-                ActionNeededText.Text = "Your computer might be running hot";
-            }
-            else
-            {
-                ActionNeededText.Text = "Your system is running well";
-            }
-        }
-
-        private void QuickAction_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button)
-            {
-                string action = button.Name.Replace("Button", "");
-
-                // In a real application, these would perform actual system actions
-                switch (action)
+                double availableGB = _hardwareMonitor.AvailableMemory / (1024.0 * 1024 * 1024);
+                if (memoryUsage > 90)
                 {
-                    case "CheckUpdates":
-                        try
-                        {
-                            Process.Start("ms-settings:windowsupdate");
-                            loggingService.Log(LogLevel.Info, "User initiated Windows Update check");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Windows Update: {ex.Message}");
-                        }
+                    MemoryStatusText.Text = $"Very high usage ({availableGB:F1} GB free)";
+                    MemoryStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                    MemoryProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                }
+                else if (memoryUsage > 75)
+                {
+                    MemoryStatusText.Text = $"High usage ({availableGB:F1} GB free)";
+                    MemoryStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                    MemoryProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                }
+                else
+                {
+                    MemoryStatusText.Text = $"Normal usage ({availableGB:F1} GB free)";
+                    MemoryStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#AAAAAA"));
+                    MemoryProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
+                }
 
-                        if (mainWindow != null)
-                        {
-                            mainWindow.ShowAssistantMessage("I'm checking for Windows updates. This helps keep your computer secure and working properly.");
-                        }
-                        break;
+                // Update Disk UI
+                DiskProgressBar.Value = diskUsage;
+                DiskUsageText.Text = $"{diskUsage:F0}%";
 
-                    case "Cleanup":
-                        try
-                        {
-                            Process.Start("cleanmgr.exe");
-                            loggingService.Log(LogLevel.Info, "User initiated Disk Cleanup");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Disk Cleanup: {ex.Message}");
-                        }
+                double freeSpaceGB = _hardwareMonitor.AvailableDiskSpace / (1024.0 * 1024 * 1024);
+                if (diskUsage > 90)
+                {
+                    DiskStatusText.Text = $"Very low space ({freeSpaceGB:F1} GB free)";
+                    DiskStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                    DiskProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+                }
+                else if (diskUsage > 75)
+                {
+                    DiskStatusText.Text = $"Low space ({freeSpaceGB:F1} GB free)";
+                    DiskStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                    DiskProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+                }
+                else
+                {
+                    DiskStatusText.Text = $"Sufficient space ({freeSpaceGB:F1} GB free)";
+                    DiskStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#AAAAAA"));
+                    DiskProgressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9b59b6"));
+                }
 
-                        if (mainWindow != null)
-                        {
-                            mainWindow.ShowAssistantMessage("Disk Cleanup will help free up space by removing temporary files and emptying the Recycle Bin. This can help your computer run faster.");
-                        }
-                        break;
+                // Update health score based on CPU, memory, disk usage and active issues
+                UpdateHealthScore();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.Log(LogLevel.Error, $"Error updating UI: {ex.Message}");
+            }
+        }
 
-                    case "StartupApps":
-                        try
-                        {
-                            Process.Start("taskmgr.exe", "/7");
-                            loggingService.Log(LogLevel.Info, "User accessed Startup Apps management");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Task Manager: {ex.Message}");
-                        }
+        private void UpdateHealthScore()
+        {
+            // Calculate health score based on various factors
+            float cpuUsage = _hardwareMonitor.CpuUsage;
+            float memoryUsage = _hardwareMonitor.MemoryUsage;
+            float diskUsage = _hardwareMonitor.DiskUsage;
 
-                        if (mainWindow != null)
-                        {
-                            mainWindow.ShowAssistantMessage("You can make your computer start faster by turning off programs you don't need when Windows starts. In the window that opens, look at the 'Startup' tab.");
-                        }
-                        break;
+            // Base score of 100
+            int score = 100;
 
-                    case "SecurityScan":
-                        try
-                        {
-                            Process.Start("ms-settings:windowsdefender");
-                            loggingService.Log(LogLevel.Info, "User initiated Security Scan");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Windows Defender: {ex.Message}");
-                        }
+            // Subtract points for high CPU, memory, disk usage
+            if (cpuUsage > 90) score -= 15;
+            else if (cpuUsage > 70) score -= 5;
 
-                        if (mainWindow != null)
+            if (memoryUsage > 90) score -= 15;
+            else if (memoryUsage > 75) score -= 5;
+
+            if (diskUsage > 90) score -= 15;
+            else if (diskUsage > 75) score -= 5;
+
+            // Subtract points for each active issue
+            score -= _activeIssues.Count * 10;
+
+            // Ensure score stays within range
+            _healthScore = Math.Max(0, Math.Min(100, score));
+
+            // Update health score display
+            HealthScoreText.Text = _healthScore.ToString();
+
+            // Update health status text
+            if (_healthScore >= 90)
+            {
+                HealthStatusText.Text = "Your system is in excellent health";
+                HealthRecommendationText.Text = "Keep up the good work! No actions needed.";
+                HealthScoreText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
+            }
+            else if (_healthScore >= 75)
+            {
+                HealthStatusText.Text = "Your system is in good health";
+                HealthRecommendationText.Text = "Minor optimizations possible but not critical.";
+                HealthScoreText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3498db"));
+            }
+            else if (_healthScore >= 50)
+            {
+                HealthStatusText.Text = "Your system needs attention";
+                HealthRecommendationText.Text = "Address the highlighted issues to improve performance.";
+                HealthScoreText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12"));
+            }
+            else
+            {
+                HealthStatusText.Text = "Your system is in poor health";
+                HealthRecommendationText.Text = "Critical issues need immediate attention!";
+                HealthScoreText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c"));
+            }
+        }
+
+        private void CheckForIssues()
+        {
+            _activeIssues.Clear();
+
+            try
+            {
+                // Check for disk space issues
+                if (_hardwareMonitor.DiskUsage > 90)
+                {
+                    _activeIssues.Add(new IssueInfo
+                    {
+                        Icon = "💾",
+                        Text = "Disk space is very low",
+                        FixButtonText = "Fix",
+                        FixActionTag = "DiskSpace",
+                        IssueSeverity = IssueInfo.Severity.High
+                    });
+                }
+                else if (_hardwareMonitor.DiskUsage > 85 && _hardwareMonitor.AvailableDiskSpace < 15 * 1024 * 1024 * 1024) // < 15GB
+                {
+                    _activeIssues.Add(new IssueInfo
+                    {
+                        Icon = "💾",
+                        Text = "Disk space is running low",
+                        FixButtonText = "Fix",
+                        FixActionTag = "DiskSpace",
+                        IssueSeverity = IssueInfo.Severity.Medium
+                    });
+                }
+
+                // Check for Windows updates
+                bool updatesNeeded = CheckForWindowsUpdates();
+                if (updatesNeeded)
+                {
+                    _activeIssues.Add(new IssueInfo
+                    {
+                        Icon = "🔄",
+                        Text = "Windows updates available",
+                        FixButtonText = "Update",
+                        FixActionTag = "WindowsUpdate",
+                        IssueSeverity = IssueInfo.Severity.Medium
+                    });
+                }
+
+                // Check for very high CPU usage
+                if (_hardwareMonitor.CpuUsage > 90)
+                {
+                    _activeIssues.Add(new IssueInfo
+                    {
+                        Icon = "⚙️",
+                        Text = "CPU usage is very high",
+                        FixButtonText = "Check",
+                        FixActionTag = "HighCPU",
+                        IssueSeverity = IssueInfo.Severity.Medium
+                    });
+                }
+
+                // Update issue display
+                UpdateIssueDisplay();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.Log(LogLevel.Error, $"Error checking for issues: {ex.Message}");
+            }
+        }
+
+        private bool CheckForWindowsUpdates()
+        {
+            // In a real application, this would check the Windows Update API
+            // For now, we'll simulate by checking registry or just return randomly
+
+            try
+            {
+                // Check registry for pending updates
+                using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update"))
+                {
+                    if (key != null)
+                    {
+                        var needReboot = key.GetValue("RebootRequired");
+                        if (needReboot != null && Convert.ToBoolean(needReboot))
                         {
-                            mainWindow.ShowAssistantMessage("I'm running a quick security check to make sure your computer is protected from viruses and other threats.");
+                            return true;
                         }
-                        break;
+                    }
+                }
+
+                // Simulate update check
+                Random random = new Random();
+                return random.Next(0, 5) == 0; // 20% chance of updates being available
+            }
+            catch
+            {
+                // If there's an error, just return false
+                return false;
+            }
+        }
+
+        private void UpdateIssueDisplay()
+        {
+            // Clear issue display
+            Issue1Border.Visibility = Visibility.Collapsed;
+            Issue2Border.Visibility = Visibility.Collapsed;
+
+            if (_activeIssues.Count == 0)
+            {
+                // No issues
+                NoIssuesText.Visibility = Visibility.Visible;
+                IssuesList.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                // Show issues
+                NoIssuesText.Visibility = Visibility.Collapsed;
+                IssuesList.Visibility = Visibility.Visible;
+
+                // Display the first issue
+                if (_activeIssues.Count > 0)
+                {
+                    Issue1Border.Visibility = Visibility.Visible;
+                    Issue1Icon.Text = _activeIssues[0].Icon;
+                    Issue1Text.Text = _activeIssues[0].Text;
+                    Issue1Button.Content = _activeIssues[0].FixButtonText;
+                    Issue1Button.Tag = _activeIssues[0].FixActionTag;
+                }
+
+                // Display the second issue if available
+                if (_activeIssues.Count > 1)
+                {
+                    Issue2Border.Visibility = Visibility.Visible;
+                    Issue2Icon.Text = _activeIssues[1].Icon;
+                    Issue2Text.Text = _activeIssues[1].Text;
+                    Issue2Button.Content = _activeIssues[1].FixButtonText;
+                    Issue2Button.Tag = _activeIssues[1].FixActionTag;
                 }
             }
+        }
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Update UI data
+            UpdateUI();
+
+            // Check for issues
+            CheckForIssues();
+
+            // Show status message
+            if (mainWindow != null)
+            {
+                mainWindow.UpdateStatus("System information refreshed");
+            }
+
+            // Log the action
+            _loggingService.Log(LogLevel.Info, "User refreshed System Overview");
         }
 
         private void FixIssue_Click(object sender, RoutedEventArgs e)
@@ -247,343 +389,189 @@ namespace SysMax2._1.Pages
             {
                 string issueType = button.Tag?.ToString() ?? "";
 
-                // In a real application, these would perform actual fixes
-                switch (issueType)
+                // Look for the MainWindow parent
+                MainWindow mainWindow = Window.GetWindow(this) as MainWindow;
+
+                // Navigate to the IssueDetailsPage for the specific issue
+                if (mainWindow != null)
                 {
-                    case "DiskSpace":
-                        try
-                        {
-                            Process.Start("cleanmgr.exe");
-                            loggingService.Log(LogLevel.Info, "User initiated fix for disk space issue");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Disk Cleanup: {ex.Message}");
-                        }
+                    // Use reflection to access the method if it's not directly accessible
+                    var method = mainWindow.GetType().GetMethod("NavigateToPage",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-                        if (mainWindow != null)
-                        {
-                            mainWindow.ShowAssistantMessage("I'm launching Disk Cleanup to help free up space. This will remove temporary files and empty your Recycle Bin, which helps your computer run better.");
-                        }
-                        break;
+                    if (method != null)
+                    {
+                        // Create the IssueDetailsPage instance with the specific issue type
+                        var issueDetailsPage = new Pages.IssueDetailsPage(issueType);
 
-                    case "WindowsUpdate":
-                        try
-                        {
-                            Process.Start("ms-settings:windowsupdate");
-                            loggingService.Log(LogLevel.Info, "User initiated fix for Windows Update issue");
-                        }
-                        catch (Exception ex)
-                        {
-                            loggingService.Log(LogLevel.Error, $"Error launching Windows Update: {ex.Message}");
-                        }
+                        // Set the content frame to show the issue details
+                        mainWindow.MainContentFrame.Navigate(issueDetailsPage);
 
-                        if (mainWindow != null)
-                        {
-                            mainWindow.ShowAssistantMessage("Installing Windows updates helps keep your computer secure and working properly. After updates are installed, you might need to restart your computer.");
-                        }
-                        break;
+                        // Log the navigation
+                        _loggingService.Log(LogLevel.Info, $"Navigated to issue details for {issueType}");
+                    }
+                    else
+                    {
+                        // Fallback to direct action if navigation fails
+                        FallbackFixIssue(issueType);
+                    }
+                }
+                else
+                {
+                    // Fallback to direct action if navigation fails
+                    FallbackFixIssue(issueType);
                 }
             }
         }
 
-        private async void RunScanButton_Click(object sender, RoutedEventArgs e)
+        private void FallbackFixIssue(string issueType)
         {
-            if (isScanning)
-                return;
-
-            try
+            // In a real application, these would perform actual fixes
+            switch (issueType)
             {
-                isScanning = true;
-                RunScanButton.Content = "Scanning...";
-                RunScanButton.IsEnabled = false;
+                case "DiskSpace":
+                    try
+                    {
+                        Process.Start("cleanmgr.exe");
+                        _loggingService.Log(LogLevel.Info, "User initiated fix for disk space issue");
+                    }
+                    catch (Exception ex)
+                    {
+                        _loggingService.Log(LogLevel.Error, $"Error launching Disk Cleanup: {ex.Message}");
+                    }
 
-                loggingService.Log(LogLevel.Info, "User initiated system scan");
-
-                if (mainWindow != null)
-                {
-                    mainWindow.ShowAssistantMessage("I'm checking your computer. This will take a moment...");
-                }
-
-                // Simulate a scan with delay
-                await Task.Delay(3000);
-
-                // Update UI with new health metrics
-                UpdateSystemHealth();
-
-                // Simulate finding new issues based on random conditions
-                if (random.Next(0, 3) == 1)  // 1 in 3 chance of finding a new issue
-                {
-                    AddRandomIssue();
-                }
-
-                loggingService.Log(LogLevel.Info, "System scan completed");
-
-                if (mainWindow != null)
-                {
-                    mainWindow.ShowAssistantMessage("Scan complete! I've updated the system health information with the latest results.");
-                }
-            }
-            catch (Exception ex)
-            {
-                loggingService.Log(LogLevel.Error, $"Error during system scan: {ex.Message}");
-            }
-            finally
-            {
-                RunScanButton.Content = "Check My Computer";
-                RunScanButton.IsEnabled = true;
-                isScanning = false;
-            }
-        }
-
-        private void AddRandomIssue()
-        {
-            // Create a few possible random issues
-            List<IssueInfo> possibleIssues = new List<IssueInfo>
-            {
-                new IssueInfo
-                {
-                    Icon = "🌡️",
-                    Text = "CPU temperature is high. Make sure your computer's cooling is working properly.",
-                    FixButtonText = "Learn More",
-                    FixActionTag = "CPUTemperature",
-                    IssueSeverity = IssueInfo.Severity.Medium
-                },
-                new IssueInfo
-                {
-                    Icon = "📊",
-                    Text = "RAM usage is high. Try closing some applications to improve performance.",
-                    FixButtonText = "Fix Now",
-                    FixActionTag = "HighMemory",
-                    IssueSeverity = IssueInfo.Severity.Medium
-                },
-                new IssueInfo
-                {
-                    Icon = "🛡️",
-                    Text = "Windows Firewall is disabled. This could put your computer at risk.",
-                    FixButtonText = "Enable Firewall",
-                    FixActionTag = "Firewall",
-                    IssueSeverity = IssueInfo.Severity.High
-                },
-                new IssueInfo
-                {
-                    Icon = "🔋",
-                    Text = "Your power plan is set to high performance. This might reduce battery life.",
-                    FixButtonText = "Change Plan",
-                    FixActionTag = "PowerPlan",
-                    IssueSeverity = IssueInfo.Severity.Low
-                }
-            };
-
-            // Select a random issue
-            IssueInfo newIssue = possibleIssues[random.Next(possibleIssues.Count)];
-            newIssue.Timestamp = DateTime.Now;
-
-            // Don't add duplicate issues
-            bool isDuplicate = false;
-            foreach (var issue in currentIssues)
-            {
-                if (issue.Text == newIssue.Text)
-                {
-                    isDuplicate = true;
+                    if (mainWindow != null)
+                    {
+                        mainWindow.ShowAssistantMessage("I'm launching Disk Cleanup to help free up space. This will remove temporary files and empty your Recycle Bin, which helps your computer run better.");
+                    }
                     break;
-                }
-            }
 
-            if (!isDuplicate)
-            {
-                // Add to the current issues list
-                currentIssues.Add(newIssue);
+                case "WindowsUpdate":
+                    try
+                    {
+                        Process.Start("ms-settings:windowsupdate");
+                        _loggingService.Log(LogLevel.Info, "User initiated fix for Windows Update issue");
+                    }
+                    catch (Exception ex)
+                    {
+                        _loggingService.Log(LogLevel.Error, $"Error launching Windows Update: {ex.Message}");
+                    }
 
-                // Log the new issue
-                loggingService.Log(LogLevel.Warning, $"New issue detected: {newIssue.Text}");
+                    if (mainWindow != null)
+                    {
+                        mainWindow.ShowAssistantMessage("Installing Windows updates helps keep your computer secure and working properly. After updates are installed, you might need to restart your computer.");
+                    }
+                    break;
 
-                // Update the UI
-                AddIssueToUI(newIssue);
+                case "HighCPU":
+                    try
+                    {
+                        Process.Start("taskmgr.exe");
+                        _loggingService.Log(LogLevel.Info, "User initiated fix for high CPU issue");
+                    }
+                    catch (Exception ex)
+                    {
+                        _loggingService.Log(LogLevel.Error, $"Error launching Task Manager: {ex.Message}");
+                    }
 
-                // Update the issue count
-                UpdateIssueCount();
+                    if (mainWindow != null)
+                    {
+                        mainWindow.ShowAssistantMessage("I've opened Task Manager so you can see which programs are using the most CPU. You may want to close any programs you aren't using to reduce CPU load.");
+                    }
+                    break;
             }
         }
 
-        private void AddIssueToUI(IssueInfo issue)
+        private void CheckUpdatesButton_Click(object sender, RoutedEventArgs e)
         {
-            // Create a new issue border
-            Border issueBorder = new Border
-            {
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2a2a2a")),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(15),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            // Log the action
+            _loggingService.Log(LogLevel.Info, "User clicked Check for Updates button");
 
-            // Create the grid
-            Grid issueGrid = new Grid();
-            issueGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            issueGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            issueGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            issueGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            // Create icon
-            TextBlock iconTextBlock = new TextBlock
-            {
-                Text = issue.Icon,
-                FontSize = 24,
-                Margin = new Thickness(0, 0, 15, 0),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            // Create text
-            TextBlock textTextBlock = new TextBlock
-            {
-                Text = issue.Text,
-                Foreground = new SolidColorBrush(Colors.White),
-                TextWrapping = TextWrapping.Wrap,
-                VerticalAlignment = VerticalAlignment.Center,
-                Tag = $"Issue{currentIssues.Count}"  // Tag for copy functionality
-            };
-
-            // Create copy button
-            Button copyButton = new Button
-            {
-                Content = "📋",
-                FontSize = 16,
-                Margin = new Thickness(10, 0, 10, 0),
-                Padding = new Thickness(5, 0, 5, 0),
-                Style = Resources["CopyButtonStyle"] as Style,
-                Tag = $"Issue{currentIssues.Count}",  // Tag for copy functionality
-                ToolTip = "Copy this issue to clipboard"
-            };
-            copyButton.Click += CopyIssueButton_Click;
-
-            // Create fix button
-            Button fixButton = new Button
-            {
-                Content = issue.FixButtonText,
-                Style = Resources["FixButtonStyle"] as Style,
-                Tag = issue.FixActionTag
-            };
-            fixButton.Click += FixIssue_Click;
-
-            // Add all elements to the grid
-            Grid.SetColumn(iconTextBlock, 0);
-            Grid.SetColumn(textTextBlock, 1);
-            Grid.SetColumn(copyButton, 2);
-            Grid.SetColumn(fixButton, 3);
-
-            issueGrid.Children.Add(iconTextBlock);
-            issueGrid.Children.Add(textTextBlock);
-            issueGrid.Children.Add(copyButton);
-            issueGrid.Children.Add(fixButton);
-
-            // Add the grid to the border
-            issueBorder.Child = issueGrid;
-
-            // Add the border to the issues list
-            IssuesList.Children.Add(issueBorder);
-        }
-
-        private void CopyIssueButton_Click(object sender, RoutedEventArgs e)
-        {
             try
             {
-                if (sender is Button button)
+                // Launch Windows Update settings
+                Process.Start("ms-settings:windowsupdate");
+
+                if (mainWindow != null)
                 {
-                    string issueTag = button.Tag?.ToString() ?? "";
-                    string issueText = "";
-
-                    // Find the corresponding text block
-                    switch (issueTag)
-                    {
-                        case "Issue1":
-                            issueText = Issue1Text.Text;
-                            break;
-                        case "Issue2":
-                            issueText = Issue2Text.Text;
-                            break;
-                        default:
-                            // For dynamically added issues
-                            foreach (var child in IssuesList.Children)
-                            {
-                                if (child is Border border && border.Child is Grid grid)
-                                {
-                                    foreach (var gridChild in grid.Children)
-                                    {
-                                        if (gridChild is TextBlock textBlock && textBlock.Tag != null && textBlock.Tag.ToString() == issueTag)
-                                        {
-                                            issueText = textBlock.Text;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            break;
-                    }
-
-                    if (!string.IsNullOrEmpty(issueText))
-                    {
-                        // Format the text
-                        string formattedText = $"SysMax Issue Report - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-                                              $"Issue: {issueText}\n" +
-                                              $"Reported by: SysMax System Health Monitor";
-
-                        // Copy to clipboard
-                        Clipboard.SetText(formattedText);
-
-                        // Log
-                        loggingService.Log(LogLevel.Info, $"User copied issue to clipboard: {issueText}");
-
-                        // Show confirmation
-                        MessageBox.Show("Issue copied to clipboard!", "Copy Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
+                    mainWindow.UpdateStatus("Checking for Windows updates...");
+                    mainWindow.ShowAssistantMessage("I've opened Windows Update so you can check for and install any available updates. Keeping your system updated helps maintain security and performance.");
                 }
             }
             catch (Exception ex)
             {
-                loggingService.Log(LogLevel.Error, $"Error copying issue to clipboard: {ex.Message}");
-                MessageBox.Show($"Error copying to clipboard: {ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _loggingService.Log(LogLevel.Error, $"Error launching Windows Update: {ex.Message}");
             }
         }
 
-        private void CopyAllIssuesButton_Click(object sender, RoutedEventArgs e)
+        private void ScanSystemButton_Click(object sender, RoutedEventArgs e)
         {
+            // Log the action
+            _loggingService.Log(LogLevel.Info, "User clicked System Scan button");
+
+            // Show scanning animation/feedback
+            if (mainWindow != null)
+            {
+                mainWindow.UpdateStatus("Scanning system...");
+                mainWindow.ShowAssistantMessage("I'm scanning your system for issues. This may take a moment...");
+            }
+
+            // Simulate a scan by rechecking issues after a delay
+            DispatcherTimer scanTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(3)
+            };
+
+            scanTimer.Tick += (s, e2) =>
+            {
+                // Stop the timer
+                scanTimer.Stop();
+
+                // Check for issues
+                CheckForIssues();
+
+                // Update UI
+                UpdateUI();
+
+                // Show completion message
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateStatus("System scan complete");
+
+                    if (_activeIssues.Count > 0)
+                    {
+                        mainWindow.ShowAssistantMessage($"Scan complete. I found {_activeIssues.Count} issue(s) that need your attention.");
+                    }
+                    else
+                    {
+                        mainWindow.ShowAssistantMessage("Good news! The scan is complete and your system appears to be running well. No issues were detected.");
+                    }
+                }
+            };
+
+            // Start the timer
+            scanTimer.Start();
+        }
+
+        private void CleanupButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Log the action
+            _loggingService.Log(LogLevel.Info, "User clicked Disk Cleanup button");
+
             try
             {
-                if (currentIssues.Count > 0)
+                // Launch Disk Cleanup
+                Process.Start("cleanmgr.exe");
+
+                if (mainWindow != null)
                 {
-                    // Build text for all issues
-                    StringBuilder allIssuesText = new StringBuilder();
-                    allIssuesText.AppendLine($"SysMax System Health Report - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                    allIssuesText.AppendLine($"System Health: {OverallHealthStatus.Text}");
-                    allIssuesText.AppendLine($"Issues Detected: {currentIssues.Count}");
-                    allIssuesText.AppendLine("--------------------------------------------------------");
-
-                    for (int i = 0; i < currentIssues.Count; i++)
-                    {
-                        allIssuesText.AppendLine($"Issue {i + 1}: {currentIssues[i].Text}");
-                        allIssuesText.AppendLine($"Severity: {currentIssues[i].IssueSeverity}");
-                        allIssuesText.AppendLine($"Detected: {currentIssues[i].Timestamp:yyyy-MM-dd HH:mm:ss}");
-                        allIssuesText.AppendLine($"Recommended Action: {currentIssues[i].FixButtonText} ({currentIssues[i].FixActionTag})");
-                        allIssuesText.AppendLine();
-                    }
-
-                    allIssuesText.AppendLine("--------------------------------------------------------");
-                    allIssuesText.AppendLine("Generated by SysMax System Health Monitor");
-
-                    // Copy to clipboard
-                    Clipboard.SetText(allIssuesText.ToString());
-
-                    // Log
-                    loggingService.Log(LogLevel.Info, $"User copied all issues to clipboard ({currentIssues.Count} issues)");
-
-                    // Show confirmation
-                    MessageBox.Show("All issues copied to clipboard!", "Copy Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                    mainWindow.UpdateStatus("Launching Disk Cleanup...");
+                    mainWindow.ShowAssistantMessage("I've launched Disk Cleanup to help you free up disk space. This will remove temporary files, empty your Recycle Bin, and potentially clean up other unnecessary files.");
                 }
             }
             catch (Exception ex)
             {
-                loggingService.Log(LogLevel.Error, $"Error copying all issues to clipboard: {ex.Message}");
-                MessageBox.Show($"Error copying to clipboard: {ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _loggingService.Log(LogLevel.Error, $"Error launching Disk Cleanup: {ex.Message}");
             }
         }
     }

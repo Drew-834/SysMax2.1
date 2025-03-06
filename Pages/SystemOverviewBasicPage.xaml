@@ -4,309 +4,247 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SysMax2._1.Pages"
+      xmlns:controls="clr-namespace:SysMax2._1.Controls"
       mc:Ignorable="d" 
-      d:DesignHeight="650" d:DesignWidth="1000"
-      Title="System Overview (Basic Mode)">
+      d:DesignHeight="720" d:DesignWidth="1020"
+      Title="System Overview - Basic Mode">
 
-    <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="10"/>
-        </Style>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <Style x:Key="CardHeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-        </Style>
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1f6aa5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="System Overview" FontSize="24" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock Text="Basic mode - simplified dashboard for your system health" 
+                           Foreground="#AAAAAA" Margin="0,5,0,0"/>
+            </StackPanel>
 
-        <Style x:Key="FixButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Button x:Name="RefreshButton" Grid.Column="1" Content="Refresh" Click="RefreshButton_Click"
+                    Background="#3498db" Foreground="White" BorderThickness="0" 
+                    Padding="15,8"/>
+        </Grid>
 
-        <Style x:Key="CopyButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#444444"/>
-            <Setter Property="Foreground" Value="#BBBBBB"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="8,3"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#555555"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
+        <!-- System Health Score -->
+        <Border Grid.Row="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                CornerRadius="8" Padding="20" Margin="0,0,0,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="20">
+                <Border Grid.Column="0" Height="100" Width="100" CornerRadius="50" 
+                        Background="#2a2a2a" Margin="0,0,20,0">
+                    <TextBlock x:Name="HealthScoreText" Text="85" FontSize="40" FontWeight="Bold" 
+                               Foreground="#3498db" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="System Health Score" FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock x:Name="HealthStatusText" Text="Your system is in good health" 
+                               Foreground="#AAAAAA" Margin="0,5,0,0"/>
+                    <TextBlock x:Name="HealthRecommendationText" Text="No critical actions needed at this time." 
+                               Foreground="#BBBBBB" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Key System Metrics -->
+        <Grid Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Grid Grid.Row="0">
-                <TextBlock Text="System Overview" FontSize="24" Foreground="White" FontWeight="SemiBold"/>
-                <Button x:Name="RunScanButton" Content="Check My Computer" Style="{StaticResource ActionButtonStyle}" 
-                        HorizontalAlignment="Right" Click="RunScanButton_Click"/>
+            <TextBlock Grid.Row="0" Text="System Status" FontSize="18" FontWeight="SemiBold" 
+                       Foreground="White" Margin="0,0,0,10"/>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- CPU Usage Card -->
+                <Border Grid.Row="0" Grid.Column="0" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="0,0,7.5,7.5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="CPU" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+
+                        <Grid Grid.Row="1" Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ProgressBar Grid.Column="0" x:Name="CpuProgressBar" Minimum="0" Maximum="100" Value="0" 
+                                        Height="15" VerticalAlignment="Center" Margin="0,0,10,0"
+                                        Foreground="#3498db" Background="#2a2a2a" BorderThickness="0"/>
+
+                            <TextBlock Grid.Column="1" x:Name="CpuUsageText" Text="0%" FontSize="16" 
+                                       FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" x:Name="CpuStatusText" Text="Normal usage" 
+                                   Foreground="#AAAAAA" FontStyle="Italic"/>
+                    </Grid>
+                </Border>
+
+                <!-- Memory Usage Card -->
+                <Border Grid.Row="0" Grid.Column="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="7.5,0,0,7.5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Memory" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+
+                        <Grid Grid.Row="1" Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ProgressBar Grid.Column="0" x:Name="MemoryProgressBar" Minimum="0" Maximum="100" Value="0" 
+                                        Height="15" VerticalAlignment="Center" Margin="0,0,10,0"
+                                        Foreground="#2ecc71" Background="#2a2a2a" BorderThickness="0"/>
+
+                            <TextBlock Grid.Column="1" x:Name="MemoryUsageText" Text="0%" FontSize="16" 
+                                       FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" x:Name="MemoryStatusText" Text="Normal usage" 
+                                   Foreground="#AAAAAA" FontStyle="Italic"/>
+                    </Grid>
+                </Border>
+
+                <!-- Disk Usage Card -->
+                <Border Grid.Row="1" Grid.Column="0" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="0,7.5,7.5,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Disk Space" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+
+                        <Grid Grid.Row="1" Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ProgressBar Grid.Column="0" x:Name="DiskProgressBar" Minimum="0" Maximum="100" Value="0" 
+                                        Height="15" VerticalAlignment="Center" Margin="0,0,10,0"
+                                        Foreground="#9b59b6" Background="#2a2a2a" BorderThickness="0"/>
+
+                            <TextBlock Grid.Column="1" x:Name="DiskUsageText" Text="0%" FontSize="16" 
+                                       FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" x:Name="DiskStatusText" Text="Plenty of disk space" 
+                                   Foreground="#AAAAAA" FontStyle="Italic"/>
+                    </Grid>
+                </Border>
+
+                <!-- Active Issues Card -->
+                <Border Grid.Row="1" Grid.Column="1" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                        CornerRadius="8" Padding="20" Margin="7.5,7.5,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Active Issues" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+
+                        <Grid Grid.Row="1">
+                            <!-- No Issues Message -->
+                            <TextBlock x:Name="NoIssuesText" Text="No issues detected! Your system is running smoothly." 
+                                      Foreground="#2ecc71" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                      FontWeight="SemiBold" TextAlignment="Center"/>
+
+                            <!-- Issue List -->
+                            <StackPanel x:Name="IssuesList" Visibility="Collapsed">
+                                <Border x:Name="Issue1Border" Background="#2a2a2a" CornerRadius="4" Padding="10" Margin="0,0,0,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock x:Name="Issue1Icon" Grid.Column="0" Text="⚠️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="Issue1Text" Grid.Column="1" Text="Windows updates required" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        <Button x:Name="Issue1Button" Grid.Column="2" Content="Fix" Tag="WindowsUpdate" Click="FixIssue_Click"
+                                                Background="#3498db" Foreground="White" BorderThickness="0" Padding="8,3" Margin="10,0,0,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <Border x:Name="Issue2Border" Background="#2a2a2a" CornerRadius="4" Padding="10" Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock x:Name="Issue2Icon" Grid.Column="0" Text="⚠️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="Issue2Text" Grid.Column="1" Text="Disk space is low" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        <Button x:Name="Issue2Button" Grid.Column="2" Content="Fix" Tag="DiskSpace" Click="FixIssue_Click"
+                                                Background="#3498db" Foreground="White" BorderThickness="0" Padding="8,3" Margin="10,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
             </Grid>
-
-            <!-- System Health Summary (Simplified) -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="System Health" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Health Status -->
-                        <Border Grid.Column="0" Background="#2a2a2a" Margin="0,0,5,0" Padding="15" CornerRadius="6">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Grid.Row="0" Text="Overall Health" FontWeight="SemiBold" 
-                                           Foreground="#BBBBBB" Margin="0,0,0,15"/>
-
-                                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Ellipse x:Name="OverallHealthIndicator" Width="20" Height="20" Fill="#2ecc71" Margin="0,0,10,0" 
-                                             VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="OverallHealthStatus" Text="Good" FontSize="24" FontWeight="Bold" 
-                                               Foreground="White" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Action Needed -->
-                        <Border Grid.Column="1" Background="#2a2a2a" Margin="5,0,0,0" Padding="15" CornerRadius="6">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Grid.Row="0" Text="Action Needed" FontWeight="SemiBold" 
-                                           Foreground="#BBBBBB" Margin="0,0,0,15"/>
-
-                                <TextBlock x:Name="ActionNeededText" Grid.Row="1" Text="You should clean your disk soon" 
-                                           Foreground="White" FontSize="16" HorizontalAlignment="Center" 
-                                           TextWrapping="Wrap" TextAlignment="Center"/>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!-- Quick Actions (Simplified) -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Quick Actions" Style="{StaticResource CardHeaderStyle}"/>
-
-                    <WrapPanel Grid.Row="1">
-                        <Button Name="CleanupButton" Margin="0,0,10,10" Padding="15,40" Width="140" 
-                                Background="#2a2a2a" Foreground="White" BorderThickness="0"
-                                Click="QuickAction_Click">
-                            <StackPanel>
-                                <TextBlock Text="🧹" FontSize="28" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Clean Disk" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Name="CheckUpdatesButton" Margin="0,0,10,10" Padding="15,40" Width="140" 
-                                Background="#2a2a2a" Foreground="White" BorderThickness="0"
-                                Click="QuickAction_Click">
-                            <StackPanel>
-                                <TextBlock Text="🔄" FontSize="28" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Check Updates" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Name="StartupAppsButton" Margin="0,0,10,10" Padding="15,40" Width="140"
-                                Background="#2a2a2a" Foreground="White" BorderThickness="0"
-                                Click="QuickAction_Click">
-                            <StackPanel>
-                                <TextBlock Text="🚀" FontSize="28" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Speed Up Startup" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Name="SecurityScanButton" Margin="0,0,10,10" Padding="15,40" Width="140"
-                                Background="#2a2a2a" Foreground="White" BorderThickness="0"
-                                Click="QuickAction_Click">
-                            <StackPanel>
-                                <TextBlock Text="🛡️" FontSize="28" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Security Check" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </Button>
-                    </WrapPanel>
-                </Grid>
-            </Border>
-
-            <!-- Issues (Simplified) -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,15,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <TextBlock Text="Issues" Style="{StaticResource CardHeaderStyle}" Margin="0"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <TextBlock x:Name="IssueCount" Text="2 issues found" Foreground="#f39c12" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Button x:Name="CopyAllIssuesButton" Content="Copy All Issues" Style="{StaticResource CopyButtonStyle}"
-                                    Click="CopyAllIssuesButton_Click" ToolTip="Copy all issues to clipboard"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <StackPanel Grid.Row="1" x:Name="IssuesList">
-                        <!-- Issue Item 1 -->
-                        <Border Background="#2a2a2a" CornerRadius="4" Padding="15" Margin="0,0,0,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" Text="⚠️" FontSize="24" Margin="0,0,15,0" VerticalAlignment="Center"/>
-
-                                <TextBlock x:Name="Issue1Text" Grid.Column="1" Text="Your disk is getting full. This might slow down your computer." 
-                                           Foreground="White" TextWrapping="Wrap" VerticalAlignment="Center"/>
-
-                                <Button Grid.Column="2" Content="📋" FontSize="16" Margin="10,0" Padding="5,0" 
-                                        Style="{StaticResource CopyButtonStyle}" Tag="Issue1"
-                                        ToolTip="Copy this issue to clipboard" Click="CopyIssueButton_Click"/>
-
-                                <Button Grid.Column="3" Content="Fix Now" Style="{StaticResource FixButtonStyle}" 
-                                        Tag="DiskSpace" Click="FixIssue_Click"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Issue Item 2 -->
-                        <Border Background="#2a2a2a" CornerRadius="4" Padding="15" Margin="0,0,0,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" Text="🔒" FontSize="24" Margin="0,0,15,0" VerticalAlignment="Center"/>
-
-                                <TextBlock x:Name="Issue2Text" Grid.Column="1" Text="Important security updates are available to keep your computer safe." 
-                                           Foreground="White" TextWrapping="Wrap" VerticalAlignment="Center"/>
-
-                                <Button Grid.Column="2" Content="📋" FontSize="16" Margin="10,0" Padding="5,0" 
-                                        Style="{StaticResource CopyButtonStyle}" Tag="Issue2"
-                                        ToolTip="Copy this issue to clipboard" Click="CopyIssueButton_Click"/>
-
-                                <Button Grid.Column="3" Content="Update Now" Style="{StaticResource FixButtonStyle}" 
-                                        Tag="WindowsUpdate" Click="FixIssue_Click"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Template for dynamically adding more issues -->
-                        <!-- Will be added programmatically for additional issues -->
-
-                        <!-- No Issues Message (hidden by default) -->
-                        <TextBlock x:Name="NoIssuesMessage" Text="No issues detected. Your system is running optimally." 
-                                  Foreground="#2ecc71" FontWeight="SemiBold" HorizontalAlignment="Center" 
-                                  Margin="0,20" Visibility="Collapsed"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
         </Grid>
-    </ScrollViewer>
+
+        <!-- Actions Bar -->
+        <Border Grid.Row="3" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                CornerRadius="8" Padding="20" Margin="0,15,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button x:Name="CheckUpdatesButton" Content="Check for Updates" Click="CheckUpdatesButton_Click"
+                        Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                        Padding="15,8" Margin="0,0,10,0"/>
+
+                <Button x:Name="ScanSystemButton" Content="System Scan" Click="ScanSystemButton_Click"
+                        Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                        Padding="15,8" Margin="10,0"/>
+
+                <Button x:Name="CleanupButton" Content="Disk Cleanup" Click="CleanupButton_Click"
+                        Background="#2d2d2d" Foreground="White" BorderThickness="0" 
+                        Padding="15,8" Margin="10,0,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
 </Page>
