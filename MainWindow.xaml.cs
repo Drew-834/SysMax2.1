@@ -11,7 +11,7 @@ using System.Windows.Controls.Primitives;
 using System.Linq;
 
 using SysMax2._1.Pages;
-using SysMax2._1Services;
+using SysMax2._1.Models;
 
 
 #nullable disable
@@ -427,7 +427,16 @@ namespace SysMax2._1
             return page;
         }
 
-        private void NavigateToPage(string pageName)
+        public void UpdateStatus(string message)
+        {
+            if (StatusText != null)
+            {
+                StatusText.Text = message;
+            }
+        }
+
+        // Method to navigate to specific pages
+        public void NavigateToPage(string pageName)
         {
             // Store the current page
             currentPage = pageName;
@@ -569,14 +578,10 @@ namespace SysMax2._1
                 }
             }
         }
+    
 
-        private void UpdateStatus(string status)
-        {
-            // Update the status bar text
-            StatusText.Text = status;
-        }
 
-        protected override void OnClosing(CancelEventArgs e)
+protected override void OnClosing(CancelEventArgs e)
         {
             // Clean up resources when closing
             statusUpdateTimer.Stop();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LibreHardwareMonitor.Hardware;
+using SysMax2._1.Models; // Added import for LogLevel
 
 namespace SysMax2._1.Services
 {

@@ -246,7 +246,7 @@ namespace SysMax2._1.Pages
                         IssueSeverity = IssueInfo.Severity.High
                     });
                 }
-                else if (_hardwareMonitor.DiskUsage > 85 && _hardwareMonitor.AvailableDiskSpace < 15 * 1024 * 1024 * 1024) // < 15GB
+                else if (_hardwareMonitor.DiskUsage > 85 && _hardwareMonitor.AvailableDiskSpace < 15L * 1024 * 1024 * 1024) // < 15GB using L to not overflow
                 {
                     _activeIssues.Add(new IssueInfo
                     {
