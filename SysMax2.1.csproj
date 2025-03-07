@@ -29,7 +29,4 @@
 	<ItemGroup>
 		<Reference Include="Microsoft.VisualBasic" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Models\" />
-	</ItemGroup>
 </Project>

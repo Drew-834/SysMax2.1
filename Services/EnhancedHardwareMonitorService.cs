@@ -8,13 +8,14 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.Management;
 using System.Net.NetworkInformation;
+using SysMax2._1.Models;
 
 namespace SysMax2._1.Services
 {
     /// <summary>
     /// Enhanced service for hardware monitoring with real-time updates and events
     /// </summary>
-    public class EnhancedHardwareMonitorService : INotifyPropertyChanged
+    public class EnhancedHardwareMonitorService : INotifyPropertyChanged, IDisposable
     {
         private static EnhancedHardwareMonitorService? _instance;
         private readonly HardwareMonitorService _baseMonitor;
@@ -249,7 +250,7 @@ namespace SysMax2._1.Services
         public float HighTemperatureThreshold { get; set; } = 80;
         public float HighMemoryThreshold { get; set; } = 85;
         public float HighDiskUsageThreshold { get; set; } = 90;
-        public long LowDiskSpaceThreshold { get; set; } = 10 * 1024 * 1024 * 1024; // 10 GB
+        public long LowDiskSpaceThreshold { get; set; } = 10L * 1024 * 1024 * 1024; // 10 GB I had to add the L to make it use 64-bit arithmetic
 
         // Alert tracking flags
         private bool _isHighCpuAlertActive = false;
@@ -273,6 +274,9 @@ namespace SysMax2._1.Services
         private long _lastBytesSent = 0;
         private DateTime _lastSampleTime = DateTime.Now;
         private NetworkInterface? _activeNetworkInterface = null;
+
+        // Property to expose monitoring state
+        public bool IsMonitoring => _isMonitoring;
 
         private EnhancedHardwareMonitorService()
         {

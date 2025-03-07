@@ -170,7 +170,7 @@ namespace SysMax2._1.Pages
 
                         if (!string.IsNullOrEmpty(productName))
                         {
-                            return $"{productName} {displayVersion ?? releaseId ?? ""} (Build {buildNumber ?? Environment.OSVersion.Version.Build})";
+                            return $"{productName} {displayVersion ?? releaseId ?? ""} (Build {buildNumber ?? Environment.OSVersion.Version.Build.ToString()})";
                         }
                     }
                 }
@@ -184,6 +184,7 @@ namespace SysMax2._1.Pages
                 return Environment.OSVersion.VersionString;
             }
         }
+
 
         private void UpdateUptimeInfo()
         {

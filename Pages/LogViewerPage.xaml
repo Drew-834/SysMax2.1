@@ -157,19 +157,21 @@
             <DataGrid.Template>
                 <ControlTemplate TargetType="DataGrid">
                     <Border Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                BorderBrush="{TemplateBinding BorderBrush}" 
+                BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid>
-                            <ContentPresenter Content="{TemplateBinding Content}"/>
+                            <ScrollViewer x:Name="DG_ScrollViewer" Focusable="false">
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                            </ScrollViewer>
                             <TextBlock x:Name="EmptyTextBlock" 
-                                       Text="No logs match the current filter criteria. Try adjusting your filters or click 'Clear Filters'." 
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                       Foreground="#AAAAAA" TextWrapping="Wrap" 
-                                       Visibility="Collapsed"/>
+                           Text="No logs match the current filter criteria. Try adjusting your filters or click 'Clear Filters'." 
+                           HorizontalAlignment="Center" VerticalAlignment="Center" 
+                           Foreground="#AAAAAA" TextWrapping="Wrap" 
+                           Visibility="Collapsed"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding Items.Count, RelativeSource={RelativeSource Self}}" Value="0">
+                        <DataTrigger Binding="{Binding ItemsSource.Count, RelativeSource={RelativeSource Self}}" Value="0">
                             <Setter TargetName="EmptyTextBlock" Property="Visibility" Value="Visible"/>
                         </DataTrigger>
                     </ControlTemplate.Triggers>

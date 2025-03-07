@@ -5,7 +5,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using SysMax2._1.Models;
 using SysMax2._1.Services;
+
 
 namespace SysMax2._1.Controls
 {
@@ -221,6 +223,9 @@ namespace SysMax2._1.Controls
             // Subscribe to hardware events
             _hardwareMonitor.PropertyChanged += HardwareMonitor_PropertyChanged;
 
+            // Register for unloaded event to clean up resources
+            this.Unloaded += UserControl_Unloaded;
+
             // Log initialization
             _loggingService.Log(LogLevel.Info, "System Metrics Dashboard initialized");
         }
@@ -344,9 +349,14 @@ namespace SysMax2._1.Controls
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            StopMonitoring();
+        }
+
         public void StopMonitoring()
         {
-            // Stop the update timer
+            // Stop the update timer (no need to dispose as DispatcherTimer doesn't implement IDisposable)
             _updateTimer?.Stop();
 
             // Unsubscribe from events
