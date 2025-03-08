@@ -163,6 +163,22 @@ namespace SysMax2._1.Pages
 
         private void ApplyFilters()
         {
+            // Add null check to prevent NullReferenceException
+            if (_logsView == null)
+            {
+                // Re-initialize the collection view if it's null
+                if (_logs != null)
+                {
+                    _logsView = CollectionViewSource.GetDefaultView(_logs);
+                    _logsView.Filter = LogFilter;
+                }
+                else
+                {
+                    // If logs collection itself is null, we can't proceed
+                    return;
+                }
+            }
+
             _logsView.Refresh();
 
             int filteredCount = _logsView.Cast<object>().Count();

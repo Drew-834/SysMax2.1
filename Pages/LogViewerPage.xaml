@@ -53,7 +53,7 @@
             <TextBlock Grid.Column="0" Text="Log Type:" VerticalAlignment="Center" 
                        Foreground="#BBBBBB" Margin="0,0,10,0"/>
             <ComboBox Grid.Column="1" x:Name="LogTypeFilter" SelectionChanged="Filter_Changed"
-                      Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                       Style="{StaticResource DarkComboBoxStyle}">
                 <ComboBoxItem Content="All Logs" IsSelected="True"/>
                 <ComboBoxItem Content="System Events"/>
                 <ComboBoxItem Content="Application Logs"/>
@@ -64,7 +64,7 @@
             <TextBlock Grid.Column="2" Text="Severity:" VerticalAlignment="Center" 
                        Foreground="#BBBBBB" Margin="15,0,10,0"/>
             <ComboBox Grid.Column="3" x:Name="SeverityFilter" SelectionChanged="Filter_Changed"
-                      Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                      Style="{StaticResource DarkComboBoxStyle}">
                 <ComboBoxItem Content="All Severities" IsSelected="True"/>
                 <ComboBoxItem Content="Info"/>
                 <ComboBoxItem Content="Warning"/>
