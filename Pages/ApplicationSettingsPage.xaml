@@ -107,7 +107,7 @@
                                 </StackPanel>
 
                                 <ComboBox x:Name="DefaultUserModeComboBox" Grid.Column="1" Width="120"
-                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                          Style="{StaticResource DarkComboBoxStyle}">
                                     <ComboBoxItem Content="Basic" IsSelected="True"/>
                                     <ComboBoxItem Content="Pro"/>
                                 </ComboBox>
@@ -127,7 +127,7 @@
                                 </StackPanel>
 
                                 <ComboBox x:Name="LanguageComboBox" Grid.Column="1" Width="120"
-                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                          Style="{StaticResource DarkComboBoxStyle}">
                                     <ComboBoxItem Content="English" IsSelected="True"/>
                                     <ComboBoxItem Content="Spanish"/>
                                     <ComboBoxItem Content="French"/>
@@ -150,7 +150,7 @@
                                 </StackPanel>
 
                                 <ComboBox x:Name="ThemeComboBox" Grid.Column="1" Width="120"
-                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                          Style="{StaticResource DarkComboBoxStyle}">
                                     <ComboBoxItem Content="Dark" IsSelected="True"/>
                                     <ComboBoxItem Content="Light"/>
                                     <ComboBoxItem Content="System"/>
@@ -254,7 +254,7 @@
                                 </StackPanel>
 
                                 <ComboBox x:Name="UpdateFrequencyComboBox" Grid.Column="1" Width="120"
-                                          Background="#2d2d2d" Foreground="White" BorderThickness="1" BorderBrush="#444444">
+                                          Style="{StaticResource DarkComboBoxStyle}">
                                     <ComboBoxItem Content="1 second"/>
                                     <ComboBoxItem Content="2 seconds" IsSelected="True"/>
                                     <ComboBoxItem Content="5 seconds"/>

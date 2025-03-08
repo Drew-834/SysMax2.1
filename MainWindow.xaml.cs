@@ -101,17 +101,19 @@ namespace SysMax2._1
                 var memoryPercentage = (int)(memoryUsageInMB * 100 / totalMemoryInMB);
 
                 // Update UI
-                CPUUsageStatus.Text = $"CPU: {cpuUsage}%";
-                MemoryUsageStatus.Text = $"RAM: {memoryPercentage}%";
+                
+                // TODO -------------------------------------------------------
+                //CPUUsageStatus.Text = $"CPU: {cpuUsage}%";
+                //MemoryUsageStatus.Text = $"RAM: {memoryPercentage}%";
 
-                // Color coding for high usage
-                CPUUsageStatus.Foreground = cpuUsage > 80 ? new SolidColorBrush(Colors.OrangeRed) :
-                                          (cpuUsage > 60 ? new SolidColorBrush(Colors.Orange) :
-                                          (SolidColorBrush)Resources["MutedTextColor"]);
+                //// Color coding for high usage
+                //CPUUsageStatus.Foreground = cpuUsage > 80 ? new SolidColorBrush(Colors.OrangeRed) :
+                //                          (cpuUsage > 60 ? new SolidColorBrush(Colors.Orange) :
+                //                          (SolidColorBrush)Resources["MutedTextColor"]);
 
-                MemoryUsageStatus.Foreground = memoryPercentage > 80 ? new SolidColorBrush(Colors.OrangeRed) :
-                                             (memoryPercentage > 60 ? new SolidColorBrush(Colors.Orange) :
-                                             (SolidColorBrush)Resources["MutedTextColor"]);
+                //MemoryUsageStatus.Foreground = memoryPercentage > 80 ? new SolidColorBrush(Colors.OrangeRed) :
+                //                             (memoryPercentage > 60 ? new SolidColorBrush(Colors.Orange) :
+                //                             (SolidColorBrush)Resources["MutedTextColor"]);
 
                 // Check for concerning system states and update assistant in Basic mode
                 if (currentUserMode == "Basic" && isAssistantPanelOpen)
