@@ -514,10 +514,18 @@ namespace SysMax2._1
                 case "CPU":
                 case "Memory":
                 case "Storage":
-                case "Diagnostics":
-                case "Optimization":
                     // For now, use placeholders for these pages
                     newPage = CreatePlaceholderPage(pageName);
+                    break;
+
+                case "Diagnostics":
+                    // Create DiagnosticsPage
+                    newPage = new Pages.DiagnosticsPage();
+                    break;
+
+                case "Optimization":
+                    // Create OptimizationPage
+                    newPage = new Pages.OptimizationPage();
                     break;
 
                 default:
